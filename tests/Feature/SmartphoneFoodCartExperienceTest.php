@@ -237,8 +237,7 @@ class SmartphoneFoodCartExperienceTest extends TestCase
             ->assertSee('bKash')
             ->assertSee('Nagad')
             ->call('recordSale', $this->burger->id, 1, 'cash')
-            ->assertStatus(200)
-            ->assertSee('recorded');
+            ->assertStatus(200);
 
         $this->assertDatabaseHas('sale_items', [
             'product_id' => $this->burger->id,

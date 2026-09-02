@@ -94,13 +94,26 @@ class BusinessDay extends Model
     }
 
     /**
-     * Open active session or start a new session
+     * Open active session or reopen today's session or start a new day session
      */
     public static function openActiveOrNew(?int $userId = null, float $float = 0): self
     {
         $active = self::activeSession();
         if ($active) {
             return $active;
+        }
+
+        $todayRecord = self::whereDate('date', Carbon::today()->toDateString())->latest('id')->first();
+        if ($todayRecord) {
+            $todayRecord->update([
+                'status' => 'open',
+                'closed_at' => null,
+                'closed_by_id' => null,
+                'opened_at' => $todayRecord->opened_at ?? now(),
+                'opened_by_id' => $userId ?? auth()->id() ?? $todayRecord->opened_by_id,
+            ]);
+
+            return $todayRecord;
         }
 
         return self::startNewSession($userId, $float);

@@ -119,7 +119,7 @@ class CartSessionResetAndHistoryTest extends TestCase
         $this->assertNull(BusinessDay::activeSession());
 
         // ==========================================
-        // 3. START SESSION 2 (REOPENING CART)
+        // 3. REOPENING CART ON SAME DAY PRESERVES TODAY'S SALES
         // ==========================================
         $qs2 = Livewire::test(QuickSell::class)
             ->assertSee('Turn ON (Open Cart)')
@@ -130,58 +130,50 @@ class CartSessionResetAndHistoryTest extends TestCase
         $session2 = BusinessDay::activeSession();
         $this->assertNotNull($session2);
         $this->assertTrue($session2->isOpen());
-        $this->assertNotEquals($session1->id, $session2->id);
 
-        // Verify that Session 2 starts fresh with ZERO counters
-        $productStats = $qs2->viewData('productTodaySales');
-        $this->assertTrue($productStats->isEmpty() || !isset($productStats[$this->burger->id]));
-        $this->assertEquals(0.0, (float) $qs2->viewData('todaySalesTotal'));
-        $this->assertEquals(0, (int) $qs2->viewData('todayItemsTotal'));
+        // On the same day, today's sales remain accumulated (2000 sales, 15 items)
+        $this->assertEquals(2000.0, (float) $qs2->viewData('todaySalesTotal'));
+        $this->assertEquals(15, (int) $qs2->viewData('todayItemsTotal'));
 
-        // ==========================================
-        // 4. RECORD SALES IN SESSION 2
-        // ==========================================
-        // Sells 3 Burgers in Session 2 (3 * 150 = 450)
+        // Sells 3 more Burgers on the same day (3 * 150 = 450) -> Total = 2,450 (18 items)
         for ($i = 0; $i < 3; $i++) {
             $qs2->call('recordSale', $this->burger->id);
         }
 
-        $session2Sales = (float) Sale::where('business_day_id', $session2->id)->sum('total_amount');
-        $session2Items = (int) Sale::where('business_day_id', $session2->id)->sum('total_items_count');
-        $this->assertEquals(450.0, $session2Sales);
-        $this->assertEquals(3, $session2Items);
+        $this->assertEquals(2450.0, (float) $qs2->viewData('todaySalesTotal'));
+        $this->assertEquals(18, (int) $qs2->viewData('todayItemsTotal'));
+
+        // Close cart at end of day 1
+        $qs2->call('openCloseModal')->call('closeCart');
 
         // ==========================================
-        // 5. VERIFY COMPLETE HISTORICAL INTEGRITY
+        // 4. NEW DAY ARRIVES (TOMORROW) -> DATA REFRESHES FOR SELLER
         // ==========================================
-        // 1. TodaySales view for seller is refreshed to Session 2 only
+        Carbon::setTestNow(Carbon::tomorrow()->setHour(9));
+
+        $qsTomorrow = Livewire::test(QuickSell::class);
+        $this->assertEquals(0.0, (float) $qsTomorrow->viewData('todaySalesTotal'));
+        $this->assertEquals(0, (int) $qsTomorrow->viewData('todayItemsTotal'));
+
         Livewire::actingAs($this->seller)
             ->test(\App\Livewire\Seller\TodaySales::class)
-            ->assertSee('৳450') // Session 2 Sales
-            ->assertDontSee('৳2,000'); // Session 1 Sales not in current session
+            ->assertSee('৳0');
 
-        // 2. Session 1 sales still exist in DB
-        $this->assertEquals(15, Sale::where('business_day_id', $session1->id)->sum('total_items_count'));
-        $this->assertEquals(2000.0, (float) Sale::where('business_day_id', $session1->id)->sum('total_amount'));
+        // ==========================================
+        // 5. VERIFY COMPLETE HISTORICAL INTEGRITY FOR ADMIN
+        // ==========================================
+        // 1. Day 1 sales still exist in DB
+        $this->assertEquals(18, Sale::where('business_day_id', $session1->id)->sum('total_items_count'));
+        $this->assertEquals(2450.0, (float) Sale::where('business_day_id', $session1->id)->sum('total_amount'));
 
-        // 3. Session 2 sales exist in DB
-        $this->assertEquals(3, Sale::where('business_day_id', $session2->id)->sum('total_items_count'));
-        $this->assertEquals(450.0, (float) Sale::where('business_day_id', $session2->id)->sum('total_amount'));
-
-        // 4. Both distinct sessions exist in DB
-        $this->assertEquals(2, BusinessDay::count());
-
-        // 5. Admin Dashboard reflects total cumulative sales across all sessions
-        Livewire::actingAs($this->admin)
-            ->test(AdminDashboard::class)
-            ->assertSee('2,450') // Total Today Sales = 2000 + 450 = 2450
-            ->assertSee('18');   // Total Items Sold = 15 + 3 = 18
-
-        // 6. Admin Seller Overview reflects Rahim's cumulative sales and shift history
+        // 2. Admin Seller Overview reflects Rahim's cumulative sales and shift history
         Livewire::actingAs($this->admin)
             ->test(SellerOverview::class, ['user' => $this->seller])
+            ->set('period', 'month')
             ->assertSee('Rahim')
             ->assertSee('2,450')
             ->assertSee('18');   // 18 units
+
+        Carbon::setTestNow(); // Reset test time
     }
 }

@@ -49,58 +49,43 @@ class TodaySales extends Component
     public function render()
     {
         $locale = app()->getLocale();
-        $activeSession = BusinessDay::activeSession();
+        $todayCompletedSales = Sale::whereDate('created_at', Carbon::today())
+            ->where('status', 'completed');
 
-        if ($activeSession) {
-            // 1. Overall Stats for Current Active Session
-            $sessionCompletedSales = Sale::where('business_day_id', $activeSession->id)
-                ->where('status', 'completed');
+        $totalRevenue = (float) (clone $todayCompletedSales)->sum('total_amount');
+        $totalItems = (int) (clone $todayCompletedSales)->sum('total_items_count');
+        $totalOrders = (int) (clone $todayCompletedSales)->count();
 
-            $totalRevenue = (float) (clone $sessionCompletedSales)->sum('total_amount');
-            $totalItems = (int) (clone $sessionCompletedSales)->sum('total_items_count');
-            $totalOrders = (int) (clone $sessionCompletedSales)->count();
+        $cashTotal = (float) (clone $todayCompletedSales)->where('payment_method', 'cash')->sum('total_amount');
+        $bkashTotal = (float) (clone $todayCompletedSales)->where('payment_method', 'bkash')->sum('total_amount');
+        $nagadTotal = (float) (clone $todayCompletedSales)->where('payment_method', 'nagad')->sum('total_amount');
 
-            $cashTotal = (float) (clone $sessionCompletedSales)->where('payment_method', 'cash')->sum('total_amount');
-            $bkashTotal = (float) (clone $sessionCompletedSales)->where('payment_method', 'bkash')->sum('total_amount');
-            $nagadTotal = (float) (clone $sessionCompletedSales)->where('payment_method', 'nagad')->sum('total_amount');
+        // 2. Query Sales List for Today
+        $query = Sale::with(['items.product', 'user'])
+            ->whereDate('created_at', Carbon::today());
 
-            // 2. Query Sales List for Current Active Session
-            $query = Sale::with(['items.product', 'user'])
-                ->where('business_day_id', $activeSession->id);
-
-            if ($this->paymentFilter !== 'all') {
-                $query->where('payment_method', $this->paymentFilter);
-            }
-
-            if ($this->statusFilter !== 'all') {
-                $query->where('status', $this->statusFilter);
-            }
-
-            if (trim($this->search) !== '') {
-                $search = trim($this->search);
-                $query->where(function ($q) use ($search) {
-                    $q->where('invoice_no', 'like', "%{$search}%")
-                        ->orWhereHas('items', function ($itemQuery) use ($search) {
-                            $itemQuery->where('product_name', 'like', "%{$search}%");
-                        })
-                        ->orWhereHas('items.product', function ($itemQuery) use ($search) {
-                            $itemQuery->where('name_bn', 'like', "%{$search}%");
-                        });
-                });
-            }
-
-            $sales = $query->latest('id')->paginate(15);
-        } else {
-            // When cart is CLOSED (or between sessions):
-            // Counters start from fresh 0, ready for the next session!
-            $totalRevenue = 0.0;
-            $totalItems = 0;
-            $totalOrders = 0;
-            $cashTotal = 0.0;
-            $bkashTotal = 0.0;
-            $nagadTotal = 0.0;
-            $sales = Sale::where('id', 0)->paginate(15);
+        if ($this->paymentFilter !== 'all') {
+            $query->where('payment_method', $this->paymentFilter);
         }
+
+        if ($this->statusFilter !== 'all') {
+            $query->where('status', $this->statusFilter);
+        }
+
+        if (trim($this->search) !== '') {
+            $search = trim($this->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('invoice_no', 'like', "%{$search}%")
+                    ->orWhereHas('items', function ($itemQuery) use ($search) {
+                        $itemQuery->where('product_name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('items.product', function ($itemQuery) use ($search) {
+                        $itemQuery->where('name_bn', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        $sales = $query->latest('id')->paginate(15);
 
         return view('livewire.seller.today-sales', [
             'sales' => $sales,

@@ -408,68 +408,42 @@ class QuickSell extends Component
 
         $products = $productsQuery->orderBy('sort_order')->get();
 
-        // 3. Current Session Resolution
+        // 3. Current Day & Cart Status Resolution
         $activeSession = BusinessDay::activeSession();
         $this->isCartOpen = $activeSession !== null;
         $currentBusinessDay = $activeSession ?? BusinessDay::whereDate('date', Carbon::today())->latest('id')->first();
 
-        // If cart is currently OPEN in an active session:
-        if ($activeSession) {
-            $sessionSaleItems = SaleItem::with(['product', 'sale'])->whereHas('sale', function ($q) use ($activeSession) {
-                $q->where('status', 'completed')
-                    ->where('business_day_id', $activeSession->id);
-            })->get();
+        // 4. Today's Sales Data & Payment Breakdown (Refreshes on a New Day)
+        $todaySaleItems = SaleItem::with(['product', 'sale'])->whereHas('sale', function ($q) {
+            $q->where('status', 'completed')
+                ->whereDate('created_at', Carbon::today());
+        })->get();
 
-            $productTodaySales = $sessionSaleItems->groupBy('product_id')->map(function ($items) {
-                return [
-                    'count' => (int) $items->sum('quantity'),
-                    'revenue' => (float) $items->sum('subtotal'),
-                    'cash_count' => (int) $items->filter(fn ($it) => $it->sale?->payment_method === 'cash')->sum('quantity'),
-                    'bkash_count' => (int) $items->filter(fn ($it) => $it->sale?->payment_method === 'bkash')->sum('quantity'),
-                    'nagad_count' => (int) $items->filter(fn ($it) => $it->sale?->payment_method === 'nagad')->sum('quantity'),
-                ];
-            });
+        $productTodaySales = $todaySaleItems->groupBy('product_id')->map(function ($items) {
+            return [
+                'count' => (int) $items->sum('quantity'),
+                'revenue' => (float) $items->sum('subtotal'),
+                'cash_count' => (int) $items->filter(fn ($it) => $it->sale?->payment_method === 'cash')->sum('quantity'),
+                'bkash_count' => (int) $items->filter(fn ($it) => $it->sale?->payment_method === 'bkash')->sum('quantity'),
+                'nagad_count' => (int) $items->filter(fn ($it) => $it->sale?->payment_method === 'nagad')->sum('quantity'),
+            ];
+        });
 
-            $todaySalesTotal = (float) Sale::where('status', 'completed')
-                ->where('business_day_id', $activeSession->id)
-                ->sum('total_amount');
+        $todaySalesQuery = Sale::where('status', 'completed')
+            ->whereDate('created_at', Carbon::today());
 
-            $todayItemsTotal = (int) Sale::where('status', 'completed')
-                ->where('business_day_id', $activeSession->id)
-                ->sum('total_items_count');
+        $todaySalesTotal = (float) (clone $todaySalesQuery)->sum('total_amount');
+        $todayItemsTotal = (int) (clone $todaySalesQuery)->sum('total_items_count');
+        $cashSalesTotal = (float) (clone $todaySalesQuery)->where('payment_method', 'cash')->sum('total_amount');
+        $bkashSalesTotal = (float) (clone $todaySalesQuery)->where('payment_method', 'bkash')->sum('total_amount');
+        $nagadSalesTotal = (float) (clone $todaySalesQuery)->where('payment_method', 'nagad')->sum('total_amount');
 
-            $cashSalesTotal = (float) Sale::where('status', 'completed')
-                ->where('business_day_id', $activeSession->id)
-                ->where('payment_method', 'cash')
-                ->sum('total_amount');
-
-            $bkashSalesTotal = (float) Sale::where('status', 'completed')
-                ->where('business_day_id', $activeSession->id)
-                ->where('payment_method', 'bkash')
-                ->sum('total_amount');
-
-            $nagadSalesTotal = (float) Sale::where('status', 'completed')
-                ->where('business_day_id', $activeSession->id)
-                ->where('payment_method', 'nagad')
-                ->sum('total_amount');
-
-            $recentSales = Sale::with(['items.product', 'user'])
-                ->where('business_day_id', $activeSession->id)
-                ->where('status', 'completed')
-                ->latest('id')
-                ->take(6)
-                ->get();
-        } else {
-            // When cart is CLOSED:
-            // Counters start from fresh 0, ready for the next session!
-            $productTodaySales = collect([]);
-            $todaySalesTotal = 0.0;
-            $todayItemsTotal = 0;
-            $cashSalesTotal = 0.0;
-            $bkashSalesTotal = 0.0;
-            $nagadSalesTotal = 0.0;
-            $recentSales = collect([]);
-        }
+        $recentSales = Sale::with(['items.product', 'user'])
+            ->whereDate('created_at', Carbon::today())
+            ->where('status', 'completed')
+            ->latest('id')
+            ->take(6)
+            ->get();
 
         $greeting = BanglaHelper::getGreeting($locale);
 
