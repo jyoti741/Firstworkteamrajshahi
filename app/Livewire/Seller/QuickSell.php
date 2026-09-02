@@ -154,9 +154,9 @@ class QuickSell extends Component
     }
 
     /**
-     * Instant 1-tap sale recording for a product
+     * Instant 1-tap sale recording for a product with explicit payment method (cash, bkash, nagad)
      */
-    public function recordSale(int $productId, int $quantity = 1): void
+    public function recordSale(int $productId, int $quantity = 1, ?string $paymentMethod = null): void
     {
         $businessDay = BusinessDay::activeSession();
         if (! $businessDay) {
@@ -173,6 +173,9 @@ class QuickSell extends Component
             return;
         }
 
+        // Determine payment method (defaults to cash if not provided)
+        $method = in_array($paymentMethod, ['cash', 'bkash', 'nagad', 'card']) ? $paymentMethod : ($this->paymentMethod ?? 'cash');
+
         // Check inventory if tracking is enabled
         if ($product->track_inventory && $product->current_stock < $quantity) {
             $msg = app()->getLocale() === 'bn'
@@ -185,7 +188,7 @@ class QuickSell extends Component
         $totalCost = $product->cost_price * $quantity;
         $profit = $subtotal - $totalCost;
 
-        DB::transaction(function () use ($product, $quantity, $businessDay, $subtotal, $totalCost, $profit) {
+        DB::transaction(function () use ($product, $quantity, $businessDay, $subtotal, $totalCost, $profit, $method) {
             $sale = Sale::create([
                 'invoice_no' => Sale::generateInvoiceNumber(),
                 'user_id' => auth()->id(),
@@ -194,7 +197,7 @@ class QuickSell extends Component
                 'total_cost' => $totalCost,
                 'total_profit' => $profit,
                 'total_items_count' => $quantity,
-                'payment_method' => $this->paymentMethod,
+                'payment_method' => $method,
                 'status' => 'completed',
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -220,11 +223,12 @@ class QuickSell extends Component
         $displayName = $product->displayName();
         $curr = BanglaHelper::formatCurrency($subtotal);
         $qty = BanglaHelper::formatNumber($quantity);
+        $methodName = seller_trans($method);
 
         if (app()->getLocale() === 'bn') {
-            $this->feedbackMessage = "+{$qty} {$displayName} ({$curr}) বিক্রি রেকর্ড করা হয়েছে!";
+            $this->feedbackMessage = "+{$qty} {$displayName} ({$curr}) • {$methodName} বিক্রি রেকর্ড করা হয়েছে!";
         } else {
-            $this->feedbackMessage = "+{$quantity} {$displayName} ({$curr}) recorded!";
+            $this->feedbackMessage = "+{$quantity} {$displayName} ({$curr}) • {$methodName} recorded!";
         }
     }
 
@@ -411,15 +415,18 @@ class QuickSell extends Component
 
         // If cart is currently OPEN in an active session:
         if ($activeSession) {
-            $sessionSaleItems = SaleItem::with('product')->whereHas('sale', function ($q) use ($activeSession) {
+            $sessionSaleItems = SaleItem::with(['product', 'sale'])->whereHas('sale', function ($q) use ($activeSession) {
                 $q->where('status', 'completed')
                     ->where('business_day_id', $activeSession->id);
             })->get();
 
             $productTodaySales = $sessionSaleItems->groupBy('product_id')->map(function ($items) {
                 return [
-                    'count' => $items->sum('quantity'),
-                    'revenue' => $items->sum('subtotal'),
+                    'count' => (int) $items->sum('quantity'),
+                    'revenue' => (float) $items->sum('subtotal'),
+                    'cash_count' => (int) $items->filter(fn ($it) => $it->sale?->payment_method === 'cash')->sum('quantity'),
+                    'bkash_count' => (int) $items->filter(fn ($it) => $it->sale?->payment_method === 'bkash')->sum('quantity'),
+                    'nagad_count' => (int) $items->filter(fn ($it) => $it->sale?->payment_method === 'nagad')->sum('quantity'),
                 ];
             });
 
@@ -430,6 +437,21 @@ class QuickSell extends Component
             $todayItemsTotal = (int) Sale::where('status', 'completed')
                 ->where('business_day_id', $activeSession->id)
                 ->sum('total_items_count');
+
+            $cashSalesTotal = (float) Sale::where('status', 'completed')
+                ->where('business_day_id', $activeSession->id)
+                ->where('payment_method', 'cash')
+                ->sum('total_amount');
+
+            $bkashSalesTotal = (float) Sale::where('status', 'completed')
+                ->where('business_day_id', $activeSession->id)
+                ->where('payment_method', 'bkash')
+                ->sum('total_amount');
+
+            $nagadSalesTotal = (float) Sale::where('status', 'completed')
+                ->where('business_day_id', $activeSession->id)
+                ->where('payment_method', 'nagad')
+                ->sum('total_amount');
 
             $recentSales = Sale::with(['items.product', 'user'])
                 ->where('business_day_id', $activeSession->id)
@@ -443,6 +465,9 @@ class QuickSell extends Component
             $productTodaySales = collect([]);
             $todaySalesTotal = 0.0;
             $todayItemsTotal = 0;
+            $cashSalesTotal = 0.0;
+            $bkashSalesTotal = 0.0;
+            $nagadSalesTotal = 0.0;
             $recentSales = collect([]);
         }
 
@@ -456,6 +481,9 @@ class QuickSell extends Component
             'productTodaySales' => $productTodaySales,
             'todaySalesTotal' => $todaySalesTotal,
             'todayItemsTotal' => $todayItemsTotal,
+            'cashSalesTotal' => $cashSalesTotal,
+            'bkashSalesTotal' => $bkashSalesTotal,
+            'nagadSalesTotal' => $nagadSalesTotal,
             'recentSales' => $recentSales,
             'currency' => CartSetting::currency(),
             'allowExpense' => CartSetting::allowSellerExpense(),

@@ -157,8 +157,9 @@ class SellerBanglaLanguageSwitchingTest extends TestCase
             ->assertSee('Today\'s Sales')
             ->assertSee('Items Sold')
             ->assertSee('Classic Burger')
-            ->assertSee('+')
-            ->assertSee('SELL')
+            ->assertSee('Cash')
+            ->assertSee('bKash')
+            ->assertSee('Nagad')
             ->assertSee('৳150');
     }
 

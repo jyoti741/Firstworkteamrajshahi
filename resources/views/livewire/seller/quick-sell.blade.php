@@ -109,8 +109,8 @@
         </div>
     </div>
 
-    <!-- Today's Summary Card (Clean & Prominent) -->
-    <div class="bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-800 rounded-3xl p-4 sm:p-5 shadow-xl">
+    <!-- Today's Summary Card (Clean & Prominent with Section Sums) -->
+    <div class="bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-800 rounded-3xl p-4 sm:p-5 shadow-xl space-y-3">
         <div class="grid grid-cols-2 gap-2.5 sm:gap-4">
             <!-- Today's Sales -->
             <div class="bg-zinc-950/70 border border-zinc-800/70 rounded-2xl p-3 sm:p-3.5 flex flex-col justify-between">
@@ -125,6 +125,42 @@
                 <span class="text-[11px] sm:text-xs font-semibold text-zinc-400 uppercase tracking-wider truncate">{{ seller_trans('items_sold') }}</span>
                 <div class="text-xl sm:text-2xl md:text-3xl font-black text-amber-400 tracking-tight mt-0.5 sm:mt-1">
                     {{ bn_num($todayItemsTotal, $locale) }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Breakdown Sums (Cash, bKash, Nagad) -->
+        <div class="grid grid-cols-3 gap-2 sm:gap-3 pt-1 border-t border-zinc-800/60">
+            <!-- Cash Sum -->
+            <div class="bg-zinc-950/50 border border-zinc-800/50 rounded-xl p-2 sm:p-2.5 flex flex-col justify-between">
+                <div class="flex items-center gap-1 text-[10px] sm:text-xs font-bold text-emerald-400 truncate">
+                    <span>💵</span>
+                    <span>{{ $locale === 'bn' ? 'ক্যাশ' : 'Cash' }}</span>
+                </div>
+                <div class="text-xs sm:text-sm md:text-base font-black text-zinc-100 mt-0.5">
+                    {{ bn_curr($cashSalesTotal, $locale, 0) }}
+                </div>
+            </div>
+
+            <!-- bKash Sum -->
+            <div class="bg-zinc-950/50 border border-pink-900/30 rounded-xl p-2 sm:p-2.5 flex flex-col justify-between">
+                <div class="flex items-center gap-1 text-[10px] sm:text-xs font-bold text-pink-400 truncate">
+                    <span>📱</span>
+                    <span>{{ $locale === 'bn' ? 'বিকাশ' : 'bKash' }}</span>
+                </div>
+                <div class="text-xs sm:text-sm md:text-base font-black text-pink-300 mt-0.5">
+                    {{ bn_curr($bkashSalesTotal, $locale, 0) }}
+                </div>
+            </div>
+
+            <!-- Nagad Sum -->
+            <div class="bg-zinc-950/50 border border-orange-900/30 rounded-xl p-2 sm:p-2.5 flex flex-col justify-between">
+                <div class="flex items-center gap-1 text-[10px] sm:text-xs font-bold text-orange-400 truncate">
+                    <span>🔶</span>
+                    <span>{{ $locale === 'bn' ? 'নগদ' : 'Nagad' }}</span>
+                </div>
+                <div class="text-xs sm:text-sm md:text-base font-black text-orange-300 mt-0.5">
+                    {{ bn_curr($nagadSalesTotal, $locale, 0) }}
                 </div>
             </div>
         </div>
@@ -151,18 +187,21 @@
         </div>
     @endif
 
-    <!-- QUICK SELL FOOD ITEMS LIST (Large Touch Cards) -->
+    <!-- QUICK SELL FOOD ITEMS LIST (Large Touch Cards with Cash, bKash, Nagad Options) -->
     <div class="space-y-3">
         @forelse($products as $product)
             @php
-                $todayStats = $productTodaySales->get($product->id, ['count' => 0, 'revenue' => 0]);
+                $todayStats = $productTodaySales->get($product->id, ['count' => 0, 'revenue' => 0, 'cash_count' => 0, 'bkash_count' => 0, 'nagad_count' => 0]);
                 $soldCount = $todayStats['count'];
+                $cashCount = $todayStats['cash_count'] ?? 0;
+                $bkashCount = $todayStats['bkash_count'] ?? 0;
+                $nagadCount = $todayStats['nagad_count'] ?? 0;
                 $isHighlighted = ($lastSoldProductId === $product->id);
                 $foodDisplayName = $product->displayName($locale);
             @endphp
-            <div class="bg-zinc-900 border {{ $isHighlighted ? 'border-amber-500 ring-2 ring-amber-500/30' : 'border-zinc-800 hover:border-zinc-700' }} rounded-3xl p-4 sm:p-5 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all">
+            <div class="bg-zinc-900 border {{ $isHighlighted ? 'border-amber-500 ring-2 ring-amber-500/30' : 'border-zinc-800 hover:border-zinc-700' }} rounded-3xl p-4 sm:p-5 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-3.5 transition-all">
                 
-                <!-- Left: Food Info (Emoji, Name, Price, Sold Count) -->
+                <!-- Left: Food Info (Emoji, Name, Price, Sold Count & Payment Breakdown) -->
                 <div class="flex items-center gap-3.5">
                     <div class="w-14 h-14 rounded-2xl bg-zinc-950 border border-zinc-800 flex items-center justify-center text-3xl shrink-0">
                         {{ $product->image_emoji ?? '🍔' }}
@@ -172,7 +211,7 @@
                         <h3 class="font-black text-base sm:text-lg text-white leading-tight">
                             {{ $foodDisplayName }}
                         </h3>
-                        <div class="flex items-center gap-2 mt-0.5">
+                        <div class="flex items-center gap-2 mt-0.5 flex-wrap">
                             <span class="text-base font-black text-amber-400">
                                 {{ bn_curr($product->price, $locale, 0) }}
                             </span>
@@ -180,30 +219,55 @@
                             <span class="text-xs font-bold text-zinc-400">
                                 {{ seller_trans('sold') }}: <strong class="text-zinc-200">{{ bn_num($soldCount, $locale) }}</strong>
                             </span>
+                            @if($soldCount > 0)
+                                <span class="inline-flex items-center gap-1.5 text-[10px] font-bold text-zinc-400 bg-zinc-950 px-2 py-0.5 rounded-lg border border-zinc-800">
+                                    @if($cashCount > 0) <span class="text-emerald-400">💵 {{ bn_num($cashCount, $locale) }}</span> @endif
+                                    @if($bkashCount > 0) <span class="text-pink-400">📱 {{ bn_num($bkashCount, $locale) }}</span> @endif
+                                    @if($nagadCount > 0) <span class="text-orange-400">🔶 {{ bn_num($nagadCount, $locale) }}</span> @endif
+                                </span>
+                            @endif
                         </div>
                     </div>
                 </div>
 
-                <!-- Right: Action Touch Buttons ([-] for correction, [+ SELL] for instant sale) -->
-                <div class="flex items-center gap-2 justify-end">
+                <!-- Right: Action Touch Buttons ([-] for correction, and 3 1-tap Payment Options: Cash, bKash, Nagad) -->
+                <div class="flex items-center gap-1.5 sm:gap-2 justify-end w-full md:w-auto">
                     <!-- Decrement / Correction Button -->
                     @if($soldCount > 0)
                         <button type="button" 
                                 @click="vibrate(30)"
                                 wire:click="recordCorrection({{ $product->id }})"
                                 title="{{ seller_trans('correct') }}"
-                                class="w-12 h-12 rounded-2xl bg-zinc-950 hover:bg-rose-950/40 text-zinc-400 hover:text-rose-300 border border-zinc-800 hover:border-rose-800/40 font-black text-xl flex items-center justify-center touch-press cursor-pointer shrink-0 transition-colors">
+                                class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-zinc-950 hover:bg-rose-950/40 text-zinc-400 hover:text-rose-300 border border-zinc-800 hover:border-rose-800/40 font-black text-xl flex items-center justify-center touch-press cursor-pointer shrink-0 transition-colors">
                             −
                         </button>
                     @endif
 
-                    <!-- + SELL Button (Primary 1-Tap Trigger) -->
+                    <!-- 💵 Cash 1-Tap Sell Button -->
                     <button type="button" 
-                            @click="vibrate(50)"
-                            wire:click="recordSale({{ $product->id }})"
-                            class="flex-1 sm:flex-none sm:min-w-[150px] h-12 px-5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 active:from-amber-600 active:to-orange-600 text-zinc-950 font-black text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20 touch-press cursor-pointer border border-amber-400/40">
-                        <span class="text-xl leading-none">+</span>
-                        <span>{{ seller_trans('sell') }}</span>
+                            @click="vibrate(40)"
+                            wire:click="recordSale({{ $product->id }}, 1, 'cash')"
+                            class="flex-1 md:flex-none md:min-w-[95px] h-11 sm:h-12 px-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:from-emerald-700 active:to-teal-700 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20 touch-press cursor-pointer border border-emerald-400/30">
+                        <span>💵</span>
+                        <span>{{ $locale === 'bn' ? 'ক্যাশ' : 'Cash' }}</span>
+                    </button>
+
+                    <!-- 📱 bKash 1-Tap Sell Button -->
+                    <button type="button" 
+                            @click="vibrate(40)"
+                            wire:click="recordSale({{ $product->id }}, 1, 'bkash')"
+                            class="flex-1 md:flex-none md:min-w-[95px] h-11 sm:h-12 px-3 rounded-2xl bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 active:from-pink-700 active:to-rose-700 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md shadow-pink-600/20 touch-press cursor-pointer border border-pink-400/30">
+                        <span>📱</span>
+                        <span>{{ $locale === 'bn' ? 'বিকাশ' : 'bKash' }}</span>
+                    </button>
+
+                    <!-- 🔶 Nagad 1-Tap Sell Button -->
+                    <button type="button" 
+                            @click="vibrate(40)"
+                            wire:click="recordSale({{ $product->id }}, 1, 'nagad')"
+                            class="flex-1 md:flex-none md:min-w-[95px] h-11 sm:h-12 px-3 rounded-2xl bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 active:from-orange-700 active:to-amber-700 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md shadow-orange-600/20 touch-press cursor-pointer border border-orange-400/30">
+                        <span>🔶</span>
+                        <span>{{ $locale === 'bn' ? 'নগদ' : 'Nagad' }}</span>
                     </button>
                 </div>
             </div>

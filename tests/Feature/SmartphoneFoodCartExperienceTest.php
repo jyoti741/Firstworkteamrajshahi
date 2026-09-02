@@ -231,9 +231,10 @@ class SmartphoneFoodCartExperienceTest extends TestCase
             ->assertSee('Sales')
             ->assertSee('Items Sold')
             ->assertSee('Classic Burger')
-            ->assertSee('+')
-            ->assertSee('SELL')
-            ->call('recordSale', $this->burger->id, 1)
+            ->assertSee('Cash')
+            ->assertSee('bKash')
+            ->assertSee('Nagad')
+            ->call('recordSale', $this->burger->id, 1, 'cash')
             ->assertStatus(200)
             ->assertSee('recorded');
 
