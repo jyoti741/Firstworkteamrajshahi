@@ -92,7 +92,7 @@ class QuickSell extends Component
     }
 
     /**
-     * Submit Close Cart: Validates Total Cost, calculates Profit, updates BusinessDay & Expense, closes cart
+     * Submit Close Cart: Finalizes active session, saves final session summary, closes cart
      */
     public function closeCart(): void
     {
@@ -107,14 +107,6 @@ class QuickSell extends Component
             return;
         }
 
-        $this->validate([
-            'todayTotalCost' => 'required|numeric|min:0',
-        ], [
-            'todayTotalCost.required' => app()->getLocale() === 'bn' ? 'আজকের মোট খরচ লিখুন।' : 'Please enter today\'s total cost.',
-            'todayTotalCost.numeric' => app()->getLocale() === 'bn' ? 'খরচের পরিমাণ সঠিক সংখ্যায় দিন।' : 'The cost must be a valid number.',
-            'todayTotalCost.min' => app()->getLocale() === 'bn' ? 'খরচের পরিমাণ ০ বা তার বেশি হতে হবে।' : 'The cost must be at least 0.',
-        ]);
-
         // Current session-scoped sales and item counts
         $sessionSales = (float) Sale::where('business_day_id', $day->id)
             ->where('status', 'completed')
@@ -123,41 +115,18 @@ class QuickSell extends Component
             ->where('status', 'completed')
             ->sum('total_items_count');
 
-        $cost = (float) $this->todayTotalCost;
-        $profit = $sessionSales - $cost;
-
         $this->closedSalesTotal = $sessionSales;
         $this->closedItemsTotal = $sessionItems;
-        $this->closedCost = $cost;
-        $this->closedProfit = $profit;
 
-        DB::transaction(function () use ($day, $cost) {
-            $day->closeCart(auth()->id(), $cost);
-
-            // Save/sync total daily cost against current cart/shift for Admin reports and profit calculations
-            Expense::updateOrCreate(
-                [
-                    'business_day_id' => $day->id,
-                ],
-                [
-                    'user_id' => auth()->id(),
-                    'category' => 'raw_materials',
-                    'title' => "Today's Total Cost",
-                    'amount' => $cost,
-                    'expense_date' => $day->date ? $day->date->toDateString() : Carbon::today()->toDateString(),
-                    'notes' => 'Recorded during cart closing by '.auth()->user()->name,
-                ]
-            );
-        });
+        $day->closeCart(auth()->id());
 
         $this->isCartOpen = false;
         $this->isCartClosedSubmitted = true;
 
-        $formattedProfit = BanglaHelper::formatCurrency($profit, app()->getLocale(), 0);
         if (app()->getLocale() === 'bn') {
-            $this->feedbackMessage = "🔴 কার্ট বন্ধ হয়েছে ✓ • মোট লাভ: {$formattedProfit}";
+            $this->feedbackMessage = "🔴 কার্ট বন্ধ হয়েছে ✓";
         } else {
-            $this->feedbackMessage = "🔴 Cart Closed ✓ • Profit: {$formattedProfit}";
+            $this->feedbackMessage = "🔴 Cart Closed ✓";
         }
     }
 

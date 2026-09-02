@@ -104,43 +104,32 @@ class SellerCloseCartCostTest extends TestCase
             ->assertSee('৳8,000')
             ->assertSee('Total Items Sold')
             ->assertSee('40')
-            ->assertSee("Today's Total Cost")
-            ->assertSee('Submit');
+            ->assertDontSee("Today's Total Cost");
     }
 
-    public function test_seller_submits_total_cost_calculates_profit_and_closes_cart(): void
+    public function test_seller_closes_cart_and_session_is_finalized(): void
     {
         $this->actingAs($this->seller);
 
         Livewire::test(QuickSell::class)
             ->call('openCloseModal')
-            ->set('todayTotalCost', 2500)
             ->call('closeCart')
             ->assertHasNoErrors()
             ->assertSet('isCartOpen', false)
             ->assertSet('isCartClosedSubmitted', true)
             ->assertSet('closedSalesTotal', 8000.0)
-            ->assertSet('closedCost', 2500.0)
-            ->assertSet('closedProfit', 5500.0)
+            ->assertSet('closedItemsTotal', 40)
             ->assertSee('Cart Closed ✓')
             ->assertSee('৳8,000')
-            ->assertSee('৳2,500')
-            ->assertSee('৳5,500');
+            ->assertSee('40');
 
-        // Check BusinessDay status and cost
+        // Check BusinessDay status
         $this->businessDay->refresh();
         $this->assertTrue($this->businessDay->isClosed());
-        $this->assertEquals(2500.0, (float) $this->businessDay->closing_cost);
         $this->assertEquals($this->seller->id, $this->businessDay->closed_by_id);
-
-        // Check Expense record saved for Admin reports
-        $this->assertDatabaseHas('expenses', [
-            'business_day_id' => $this->businessDay->id,
-            'amount' => 2500,
-        ]);
     }
 
-    public function test_close_cart_in_bangla_mode_displays_bangla_labels_numerals_and_profit(): void
+    public function test_close_cart_in_bangla_mode_displays_bangla_labels_and_numerals(): void
     {
         $this->seller->update(['locale' => 'bn']);
         $this->actingAs($this->seller);
@@ -156,16 +145,11 @@ class SellerCloseCartCostTest extends TestCase
             ->assertSee('৳৮,০০০')
             ->assertSee('মোট বিক্রিত আইটেম')
             ->assertSee('৪০')
-            ->assertSee('আজকের মোট খরচ')
-            ->assertSee('জমা দিন')
-            ->set('todayTotalCost', 2500)
             ->call('closeCart')
             ->assertHasNoErrors()
             ->assertSee('কার্ট বন্ধ হয়েছে ✓')
             ->assertSee('৳৮,০০০')
-            ->assertSee('৳২,৫০০')
-            ->assertSee('মোট লাভ')
-            ->assertSee('৳৫,৫০০');
+            ->assertSee('৪০');
     }
 
     public function test_prevents_duplicate_closing_of_same_cart(): void
@@ -175,7 +159,6 @@ class SellerCloseCartCostTest extends TestCase
         // First close
         Livewire::test(QuickSell::class)
             ->call('openCloseModal')
-            ->set('todayTotalCost', 2500)
             ->call('closeCart');
 
         $this->businessDay->refresh();
@@ -185,28 +168,5 @@ class SellerCloseCartCostTest extends TestCase
         Livewire::test(QuickSell::class)
             ->call('openCloseModal')
             ->assertSet('showCloseModal', false);
-
-        // Ensure only 1 expense was created
-        $this->assertEquals(1, Expense::where('business_day_id', $this->businessDay->id)->count());
-    }
-
-    public function test_cost_is_available_to_admin_reports_and_profit_calculations(): void
-    {
-        $this->actingAs($this->seller);
-
-        Livewire::test(QuickSell::class)
-            ->call('openCloseModal')
-            ->set('todayTotalCost', 2500)
-            ->call('closeCart');
-
-        // Verify Admin calculation
-        $todayExpenses = (float) Expense::whereDate('expense_date', Carbon::today()->toDateString())->sum('amount');
-        $this->assertEquals(2500.0, $todayExpenses);
-
-        $todaySales = (float) Sale::where('status', 'completed')->whereDate('created_at', Carbon::today())->sum('total_amount');
-        $this->assertEquals(8000.0, $todaySales);
-
-        $adminCalculatedProfit = $todaySales - $todayExpenses;
-        $this->assertEquals(5500.0, $adminCalculatedProfit);
     }
 }

@@ -271,7 +271,7 @@
             <div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-md p-5 sm:p-6 shadow-2xl space-y-4">
                 
                 @if(!$isCartClosedSubmitted)
-                    <!-- Initial Form State: Summary & Cost Input -->
+                    <!-- Initial Form State: Session Summary & Confirmation -->
                     <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
                         <div class="flex items-center gap-2">
                             <span class="text-xl">🔴</span>
@@ -280,7 +280,7 @@
                         <button type="button" wire:click="dismissCloseModal" class="text-zinc-400 hover:text-white font-black cursor-pointer text-base">✕</button>
                     </div>
 
-                    <!-- Closing Summary: Total Sales & Total Items Sold -->
+                    <!-- Closing Summary: Total Sales & Total Items Sold in current session -->
                     <div class="grid grid-cols-2 gap-2.5 bg-zinc-950/80 border border-zinc-800/80 rounded-2xl p-3.5">
                         <div>
                             <span class="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block">{{ seller_trans('total_sales') }}</span>
@@ -292,28 +292,11 @@
                         </div>
                     </div>
 
-                    <!-- Single Cost Input: Today's Total Cost -->
-                    <div class="space-y-1.5 pt-1">
-                        <label class="block text-xs font-bold text-zinc-200">
-                            {{ seller_trans('todays_total_cost') }}
-                        </label>
-                        <div class="relative">
-                            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 font-black text-base">{{ $currency }}</span>
-                            <input type="number" 
-                                   step="any" 
-                                   min="0"
-                                   wire:model="todayTotalCost" 
-                                   wire:keydown.enter="closeCart"
-                                   placeholder="{{ seller_trans('enter_amount') }}" 
-                                   class="w-full bg-zinc-950 border @error('todayTotalCost') border-rose-500 @else border-zinc-700 @enderror rounded-2xl pl-9 pr-4 py-3 text-base sm:text-lg text-white font-black focus:ring-2 focus:ring-amber-500 focus:outline-none"
-                                   autofocus>
-                        </div>
-                        @error('todayTotalCost')
-                            <p class="text-[11px] text-rose-400 font-semibold mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
+                    <p class="text-xs text-zinc-400 text-center py-1">
+                        {{ $locale === 'bn' ? 'বর্তমান শিফট সমাপ্ত করতে কার্ট বন্ধ নিশ্চিত করুন।' : 'Confirm closing this cart session.' }}
+                    </p>
 
-                    <!-- Action Buttons: Cancel / Submit -->
+                    <!-- Action Buttons: Cancel / Close Cart -->
                     <div class="flex items-center justify-end gap-2.5 pt-2 border-t border-zinc-800">
                         <button type="button" wire:click="dismissCloseModal" class="px-4 py-2.5 rounded-2xl text-xs font-semibold text-zinc-400 hover:text-white bg-zinc-800 hover:bg-zinc-700 cursor-pointer transition-colors">
                             {{ seller_trans('cancel') }}
@@ -322,12 +305,12 @@
                                 wire:click="closeCart"
                                 class="flex-1 py-3 rounded-2xl text-xs sm:text-sm font-black text-white bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 shadow-lg shadow-rose-600/30 touch-press cursor-pointer flex items-center justify-center gap-1.5">
                             <span>🔒</span>
-                            <span>{{ seller_trans('submit') }}</span>
+                            <span>{{ seller_trans('close_cart') }}</span>
                         </button>
                     </div>
 
                 @else
-                    <!-- Success State: Cart Closed ✓ & Profit Breakdown -->
+                    <!-- Success State: Cart Closed ✓ & Summary -->
                     <div class="text-center py-2 space-y-4">
                         <div class="w-14 h-14 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-3xl mx-auto shadow-lg shadow-emerald-500/10">
                             ✓
@@ -339,21 +322,15 @@
                             </h3>
                         </div>
 
-                        <!-- Calculated Profit Breakdown Card -->
+                        <!-- Session Final Summary Card -->
                         <div class="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 text-left space-y-2.5">
                             <div class="flex items-center justify-between text-xs sm:text-sm text-zinc-300">
                                 <span>{{ seller_trans('total_sales') }}:</span>
                                 <span class="font-bold text-white">{{ bn_curr($closedSalesTotal, $locale, 0) }}</span>
                             </div>
                             <div class="flex items-center justify-between text-xs sm:text-sm text-zinc-300">
-                                <span>{{ seller_trans('todays_total_cost') }}:</span>
-                                <span class="font-bold text-rose-300">{{ bn_curr($closedCost, $locale, 0) }}</span>
-                            </div>
-                            <div class="border-t border-zinc-800 pt-2 flex items-center justify-between">
-                                <span class="text-xs sm:text-sm font-black text-zinc-200">{{ seller_trans('profit') }}:</span>
-                                <span class="text-base sm:text-lg font-black {{ ($closedProfit ?? 0) >= 0 ? 'text-emerald-400' : 'text-rose-400' }}">
-                                    {{ bn_curr($closedProfit, $locale, 0) }}
-                                </span>
+                                <span>{{ seller_trans('total_items_sold') }}:</span>
+                                <span class="font-bold text-amber-400">{{ bn_num($closedItemsTotal, $locale) }}</span>
                             </div>
                         </div>
 

@@ -102,21 +102,20 @@ class CartSessionResetAndHistoryTest extends TestCase
         $this->assertEquals(15, $session1Items);
 
         // ==========================================
-        // 2. CLOSE SESSION 1 WITH COST = 800
+        // 2. CLOSE SESSION 1
         // ==========================================
         $qs1->call('openCloseModal')
             ->assertSee('৳2,000')
             ->assertSee('15')
-            ->set('todayTotalCost', 800)
             ->call('closeCart')
             ->assertHasNoErrors()
             ->assertSee('Cart Closed ✓')
-            ->assertSee('৳1,200') // Profit = 2000 - 800 = 1200
+            ->assertSee('৳2,000')
+            ->assertSee('15')
             ->call('dismissCloseModal');
 
         $session1->refresh();
         $this->assertTrue($session1->isClosed());
-        $this->assertEquals(800.0, (float) $session1->closing_cost);
         $this->assertNull(BusinessDay::activeSession());
 
         // ==========================================
@@ -183,8 +182,6 @@ class CartSessionResetAndHistoryTest extends TestCase
             ->test(SellerOverview::class, ['user' => $this->seller])
             ->assertSee('Rahim')
             ->assertSee('2,450')
-            ->assertSee('800')   // Rahim's Cost
-            ->assertSee('1,650') // Rahim's Net Profit: 2450 - 800 = 1650
             ->assertSee('18');   // 18 units
     }
 }
