@@ -230,8 +230,38 @@
                     </div>
                 </div>
 
-                <!-- Right: Action Touch Buttons ([-] for correction, and 3 1-tap Payment Options: Cash, bKash, Nagad) -->
-                <div class="flex items-center gap-1.5 sm:gap-2 justify-end w-full md:w-auto">
+                <!-- Right: Action Touch Buttons (Cash, bKash, Nagad options, [-] correction, and classic [+ SELL] button) -->
+                <div class="flex flex-wrap items-center gap-2 justify-end w-full md:w-auto">
+                    <!-- Cash, bKash, Nagad Quick Payment Options -->
+                    <div class="flex items-center gap-1 bg-zinc-950/80 p-1 rounded-2xl border border-zinc-800">
+                        <button type="button" 
+                                @click="vibrate(30)"
+                                wire:click="recordSale({{ $product->id }}, 1, 'cash')"
+                                title="{{ $locale === 'bn' ? 'ক্যাশ এ বিক্রি' : 'Sell via Cash' }}"
+                                class="px-2.5 py-1.5 rounded-xl text-xs font-bold text-emerald-400 hover:bg-emerald-500/20 active:bg-emerald-500/30 transition-all flex items-center gap-1 touch-press cursor-pointer">
+                            <span>💵</span>
+                            <span class="text-[11px]">{{ $locale === 'bn' ? 'ক্যাশ' : 'Cash' }}</span>
+                        </button>
+
+                        <button type="button" 
+                                @click="vibrate(30)"
+                                wire:click="recordSale({{ $product->id }}, 1, 'bkash')"
+                                title="{{ $locale === 'bn' ? 'বিকাশ এ বিক্রি' : 'Sell via bKash' }}"
+                                class="px-2.5 py-1.5 rounded-xl text-xs font-bold text-pink-400 hover:bg-pink-500/20 active:bg-pink-500/30 transition-all flex items-center gap-1 touch-press cursor-pointer">
+                            <span>📱</span>
+                            <span class="text-[11px]">{{ $locale === 'bn' ? 'বিকাশ' : 'bKash' }}</span>
+                        </button>
+
+                        <button type="button" 
+                                @click="vibrate(30)"
+                                wire:click="recordSale({{ $product->id }}, 1, 'nagad')"
+                                title="{{ $locale === 'bn' ? 'নগদ এ বিক্রি' : 'Sell via Nagad' }}"
+                                class="px-2.5 py-1.5 rounded-xl text-xs font-bold text-orange-400 hover:bg-orange-500/20 active:bg-orange-500/30 transition-all flex items-center gap-1 touch-press cursor-pointer">
+                            <span>🔶</span>
+                            <span class="text-[11px]">{{ $locale === 'bn' ? 'নগদ' : 'Nagad' }}</span>
+                        </button>
+                    </div>
+
                     <!-- Decrement / Correction Button -->
                     @if($soldCount > 0)
                         <button type="button" 
@@ -243,31 +273,13 @@
                         </button>
                     @endif
 
-                    <!-- 💵 Cash 1-Tap Sell Button -->
+                    <!-- + SELL Button (Classic Primary 1-Tap Trigger As Before) -->
                     <button type="button" 
-                            @click="vibrate(40)"
-                            wire:click="recordSale({{ $product->id }}, 1, 'cash')"
-                            class="flex-1 md:flex-none md:min-w-[95px] h-11 sm:h-12 px-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:from-emerald-700 active:to-teal-700 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20 touch-press cursor-pointer border border-emerald-400/30">
-                        <span>💵</span>
-                        <span>{{ $locale === 'bn' ? 'ক্যাশ' : 'Cash' }}</span>
-                    </button>
-
-                    <!-- 📱 bKash 1-Tap Sell Button -->
-                    <button type="button" 
-                            @click="vibrate(40)"
-                            wire:click="recordSale({{ $product->id }}, 1, 'bkash')"
-                            class="flex-1 md:flex-none md:min-w-[95px] h-11 sm:h-12 px-3 rounded-2xl bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 active:from-pink-700 active:to-rose-700 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md shadow-pink-600/20 touch-press cursor-pointer border border-pink-400/30">
-                        <span>📱</span>
-                        <span>{{ $locale === 'bn' ? 'বিকাশ' : 'bKash' }}</span>
-                    </button>
-
-                    <!-- 🔶 Nagad 1-Tap Sell Button -->
-                    <button type="button" 
-                            @click="vibrate(40)"
-                            wire:click="recordSale({{ $product->id }}, 1, 'nagad')"
-                            class="flex-1 md:flex-none md:min-w-[95px] h-11 sm:h-12 px-3 rounded-2xl bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 active:from-orange-700 active:to-amber-700 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md shadow-orange-600/20 touch-press cursor-pointer border border-orange-400/30">
-                        <span>🔶</span>
-                        <span>{{ $locale === 'bn' ? 'নগদ' : 'Nagad' }}</span>
+                            @click="vibrate(50)"
+                            wire:click="recordSale({{ $product->id }})"
+                            class="flex-1 sm:flex-none sm:min-w-[130px] h-11 sm:h-12 px-5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 active:from-amber-600 active:to-orange-600 text-zinc-950 font-black text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20 touch-press cursor-pointer border border-amber-400/40">
+                        <span class="text-xl leading-none">+</span>
+                        <span>{{ seller_trans('sell') }}</span>
                     </button>
                 </div>
             </div>
