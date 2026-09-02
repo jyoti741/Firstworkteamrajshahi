@@ -111,9 +111,6 @@ class CartFlowSecurityAndOperationsTest extends TestCase
         $response = $this->actingAs($this->admin)->get('/admin/products');
         $response->assertStatus(200);
 
-        $response = $this->actingAs($this->admin)->get('/admin/inventory');
-        $response->assertStatus(200);
-
         $response = $this->actingAs($this->admin)->get('/admin/reports');
         $response->assertStatus(200);
 

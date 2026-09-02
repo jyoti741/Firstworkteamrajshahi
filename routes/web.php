@@ -2,7 +2,6 @@
 
 use App\Livewire\Admin\Dashboard as AdminDashboard;
 use App\Livewire\Admin\ExpenseManager;
-use App\Livewire\Admin\InventoryManager;
 use App\Livewire\Admin\ProductManager;
 use App\Livewire\Admin\Reports;
 use App\Livewire\Admin\SalesList;
@@ -51,7 +50,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/sales', SalesList::class)->name('sales');
     Route::get('/expenses', ExpenseManager::class)->name('expenses');
     Route::get('/products', ProductManager::class)->name('products');
-    Route::get('/inventory', InventoryManager::class)->name('inventory');
     Route::get('/reports', Reports::class)->name('reports');
     Route::get('/sellers', SellerManager::class)->name('sellers');
     Route::get('/sellers/overview/{user?}', SellerOverview::class)->name('sellers.overview');

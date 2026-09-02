@@ -63,12 +63,6 @@
                     <span>Products & Prices</span>
                 </a>
 
-                <a href="{{ route('admin.inventory') }}" 
-                   class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('admin.inventory') ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60' }}">
-                    <span class="text-base">📦</span>
-                    <span>Inventory Logs</span>
-                </a>
-
                 <div class="pt-4 px-3 pb-2 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
                     Analysis & Staff
                 </div>
@@ -335,9 +329,6 @@
                 </div>
                 <a href="{{ route('admin.products') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold {{ request()->routeIs('admin.products') ? 'bg-amber-500/15 text-amber-400' : 'text-zinc-300 hover:bg-zinc-800' }}">
                     <span>🍔</span> Food Items
-                </a>
-                <a href="{{ route('admin.inventory') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold {{ request()->routeIs('admin.inventory') ? 'bg-amber-500/15 text-amber-400' : 'text-zinc-300 hover:bg-zinc-800' }}">
-                    <span>📦</span> Inventory
                 </a>
 
                 <div class="pt-3 px-3 pb-1 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">

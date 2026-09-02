@@ -22,8 +22,6 @@ class Sale extends Model
         'payment_method',
         'status',
         'notes',
-        'created_at',
-        'updated_at',
     ];
 
     protected function casts(): array
@@ -53,8 +51,8 @@ class Sale extends Model
 
     public static function generateInvoiceNumber(): string
     {
-        $prefix = 'INV-'.date('ymd').'-';
-        $lastSale = self::where('invoice_no', 'like', $prefix.'%')->latest('id')->first();
+        $prefix = 'INV-' . date('ymd') . '-';
+        $lastSale = self::where('invoice_no', 'like', $prefix . '%')->latest('id')->first();
 
         if ($lastSale) {
             $lastNumber = (int) substr($lastSale->invoice_no, strlen($prefix));
@@ -63,6 +61,6 @@ class Sale extends Model
             $nextNumber = '0001';
         }
 
-        return $prefix.$nextNumber;
+        return $prefix . $nextNumber;
     }
 }
