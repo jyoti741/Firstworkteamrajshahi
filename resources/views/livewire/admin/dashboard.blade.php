@@ -246,7 +246,7 @@
                     <button type="button" 
                             wire:click="reopenBusinessDay"
                             class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-zinc-950 rounded-xl text-xs font-black transition-all cursor-pointer touch-press shadow-md shadow-emerald-600/20">
-                        Turn ON (Reopen)
+                        Turn ON (Open Cart)
                     </button>
                 @endif
             </div>

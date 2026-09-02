@@ -28,9 +28,9 @@ class Dashboard extends Component
 
     public function closeBusinessDay(): void
     {
-        $currentDay = BusinessDay::current();
+        $currentDay = BusinessDay::activeSession() ?? BusinessDay::current();
 
-        if ($currentDay) {
+        if ($currentDay && $currentDay->isOpen()) {
             $currentDay->update([
                 'status' => 'closed',
                 'closed_at' => now(),
@@ -41,23 +41,14 @@ class Dashboard extends Component
 
             $this->showDayModal = false;
             $this->reset(['closingCashAmount', 'dayNotes']);
-            session()->flash('success', 'Business Day has been closed successfully.');
+            session()->flash('success', 'Cart session has been closed successfully.');
         }
     }
 
     public function reopenBusinessDay(): void
     {
-        $currentDay = BusinessDay::current();
-
-        if ($currentDay) {
-            $currentDay->update([
-                'status' => 'open',
-                'closed_at' => null,
-                'closed_by_id' => null,
-            ]);
-
-            session()->flash('success', 'Business Day reopened.');
-        }
+        BusinessDay::openActiveOrNew(auth()->id());
+        session()->flash('success', 'New cart session started successfully.');
     }
 
     public function render()
@@ -157,10 +148,18 @@ class Dashboard extends Component
         ];
 
         // 9. Business Day Status & Recent Sales
-        $currentBusinessDay = BusinessDay::with(['openedBy', 'closedBy'])->whereDate('date', Carbon::today())->latest('id')->first();
-        if (! $currentBusinessDay) {
-            $currentBusinessDay = BusinessDay::current();
-        }
+        $activeSession = BusinessDay::activeSession();
+        $currentBusinessDay = $activeSession 
+            ?? BusinessDay::with(['openedBy', 'closedBy'])->whereDate('date', Carbon::today())->latest('id')->first()
+            ?? BusinessDay::latest('id')->first();
+
+        $activeShiftSales = $activeSession 
+            ? (float) Sale::where('status', 'completed')->where('business_day_id', $activeSession->id)->sum('total_amount') 
+            : 0.0;
+        $activeShiftItems = $activeSession 
+            ? (int) Sale::where('status', 'completed')->where('business_day_id', $activeSession->id)->sum('total_items_count') 
+            : 0;
+
         $recentSales = Sale::with(['items', 'user'])
             ->latest('id')
             ->take(5)
@@ -190,6 +189,9 @@ class Dashboard extends Component
             'bestSellingItems' => $bestSellingItems,
             'categoriesData' => $categoriesData,
             'paymentBreakdown' => $paymentBreakdown,
+            'activeSession' => $activeSession,
+            'activeShiftSales' => $activeShiftSales,
+            'activeShiftItems' => $activeShiftItems,
             'currentBusinessDay' => $currentBusinessDay,
             'recentSales' => $recentSales,
             'currency' => CartSetting::currency(),
