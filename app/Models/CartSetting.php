@@ -14,11 +14,27 @@ class CartSetting extends Model
         'value',
     ];
 
+    protected static ?array $settingsCache = null;
+
+    public static function loadAllSettings(): array
+    {
+        if (self::$settingsCache === null) {
+            self::$settingsCache = self::pluck('value', 'key')->all();
+        }
+
+        return self::$settingsCache;
+    }
+
+    public static function clearCache(): void
+    {
+        self::$settingsCache = null;
+    }
+
     public static function get(string $key, mixed $default = null): mixed
     {
-        $setting = self::where('key', $key)->first();
+        $all = self::loadAllSettings();
 
-        return $setting ? $setting->value : $default;
+        return array_key_exists($key, $all) ? $all[$key] : $default;
     }
 
     public static function set(string $key, mixed $value): void
@@ -27,6 +43,8 @@ class CartSetting extends Model
             ['key' => $key],
             ['value' => is_bool($value) ? ($value ? '1' : '0') : (string) $value]
         );
+
+        self::clearCache();
     }
 
     public static function currency(): string

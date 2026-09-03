@@ -49,20 +49,32 @@ class TodaySales extends Component
     public function render()
     {
         $locale = app()->getLocale();
-        $todayCompletedSales = Sale::whereDate('created_at', Carbon::today())
-            ->where('status', 'completed');
+        $todayStart = Carbon::today()->startOfDay();
+        $todayEnd = Carbon::today()->endOfDay();
 
-        $totalRevenue = (float) (clone $todayCompletedSales)->sum('total_amount');
-        $totalItems = (int) (clone $todayCompletedSales)->sum('total_items_count');
-        $totalOrders = (int) (clone $todayCompletedSales)->count();
+        $metrics = DB::table('sales')
+            ->where('status', 'completed')
+            ->whereBetween('created_at', [$todayStart, $todayEnd])
+            ->selectRaw("
+                COALESCE(SUM(total_amount), 0) as total_revenue,
+                COALESCE(SUM(total_items_count), 0) as total_items,
+                COUNT(*) as total_orders,
+                COALESCE(SUM(CASE WHEN payment_method = 'cash' THEN total_amount ELSE 0 END), 0) as cash_total,
+                COALESCE(SUM(CASE WHEN payment_method = 'bkash' THEN total_amount ELSE 0 END), 0) as bkash_total,
+                COALESCE(SUM(CASE WHEN payment_method = 'nagad' THEN total_amount ELSE 0 END), 0) as nagad_total
+            ")
+            ->first();
 
-        $cashTotal = (float) (clone $todayCompletedSales)->where('payment_method', 'cash')->sum('total_amount');
-        $bkashTotal = (float) (clone $todayCompletedSales)->where('payment_method', 'bkash')->sum('total_amount');
-        $nagadTotal = (float) (clone $todayCompletedSales)->where('payment_method', 'nagad')->sum('total_amount');
+        $totalRevenue = (float) ($metrics->total_revenue ?? 0);
+        $totalItems = (int) ($metrics->total_items ?? 0);
+        $totalOrders = (int) ($metrics->total_orders ?? 0);
+        $cashTotal = (float) ($metrics->cash_total ?? 0);
+        $bkashTotal = (float) ($metrics->bkash_total ?? 0);
+        $nagadTotal = (float) ($metrics->nagad_total ?? 0);
 
         // 2. Query Sales List for Today
         $query = Sale::with(['items.product', 'user'])
-            ->whereDate('created_at', Carbon::today());
+            ->whereBetween('created_at', [$todayStart, $todayEnd]);
 
         if ($this->paymentFilter !== 'all') {
             $query->where('payment_method', $this->paymentFilter);

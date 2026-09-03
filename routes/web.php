@@ -8,6 +8,7 @@ use App\Livewire\Admin\SalesList;
 use App\Livewire\Admin\SellerManager;
 use App\Livewire\Admin\SellerOverview;
 use App\Livewire\Admin\Settings as AdminSettings;
+use App\Livewire\Seller\ExpenseManager as SellerExpenseManager;
 use App\Livewire\Seller\QuickSell;
 use App\Livewire\Seller\TodaySales;
 use Illuminate\Support\Facades\Route;
@@ -40,6 +41,7 @@ Route::get('/dashboard', function () {
 Route::middleware(['auth', 'seller', 'seller.locale'])->prefix('seller')->name('seller.')->group(function () {
     Route::get('/quick-sell', QuickSell::class)->name('quick-sell');
     Route::get('/today-sales', TodaySales::class)->name('today-sales');
+    Route::get('/expenses', SellerExpenseManager::class)->name('expenses');
 });
 
 // ==========================================

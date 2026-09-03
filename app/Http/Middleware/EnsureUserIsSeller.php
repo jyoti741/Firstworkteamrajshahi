@@ -20,7 +20,7 @@ class EnsureUserIsSeller
         }
 
         if (! $user->is_active) {
-            auth()->logout();
+            auth()->guard('web')->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 

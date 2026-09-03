@@ -195,7 +195,7 @@ class SellerBanglaLanguageSwitchingTest extends TestCase
             ->assertSee('বিক্রি')
             ->assertSee('আজকের বিক্রি')
             ->assertSee('মোট বিক্রিত আইটেম')
-            ->assertSee('আজকের লেনদেন')
+            ->assertSee('আজকের বিক্রি দেখুন')
             ->assertSee('ক্যাশ')
             ->assertSee('বিকাশ')
             ->assertSee('নগদ')
@@ -203,6 +203,21 @@ class SellerBanglaLanguageSwitchingTest extends TestCase
             ->call('recordSale', $this->burger->id, 1)
             ->assertStatus(200)
             ->assertSee('বিক্রি রেকর্ড করা হয়েছে');
+    }
+
+    public function test_when_cart_is_closed_in_bangla_mode_it_shows_cart_chalu_korun_only(): void
+    {
+        $this->seller->update(['locale' => 'bn']);
+        $this->actingAs($this->seller);
+        app()->setLocale('bn');
+        session(['seller_locale' => 'bn']);
+
+        BusinessDay::query()->update(['status' => 'closed', 'closed_at' => now(), 'closed_by_id' => $this->seller->id]);
+
+        Livewire::test(QuickSell::class)
+            ->assertStatus(200)
+            ->assertSee('কার্ট চালু করুন')
+            ->assertDontSee('চালু করুন (কার্ট খুলুন)');
     }
 
     public function test_when_bangla_selected_today_sales_records_displays_bangla_text_and_numerals(): void
@@ -258,5 +273,26 @@ class SellerBanglaLanguageSwitchingTest extends TestCase
             'name_bn' => 'নাগা ব্লাস্ট রোল',
             'price' => 140,
         ]);
+    }
+
+    public function test_language_switcher_is_rendered_inside_hamburger_menu_drawer(): void
+    {
+        $this->actingAs($this->seller);
+
+        $response = $this->get(route('seller.quick-sell'));
+        $response->assertStatus(200);
+
+        // Language switcher options are in the page
+        $response->assertSee('wire:click="switchLanguage(\'bn\')"', false);
+        $response->assertSee('wire:click="switchLanguage(\'en\')"', false);
+        $response->assertSee('বাংলা');
+        $response->assertSee('English');
+
+        // Confirm it is placed inside the drawer panel
+        $content = $response->getContent();
+        $this->assertStringContainsString('sellerMenuOpen', $content);
+        $drawerPart = explode('<!-- Seller Hamburger Slideover Menu Drawer -->', $content)[1] ?? '';
+        $drawerPanel = explode('<!-- Alert / Toast Notification Area -->', $drawerPart)[0] ?? '';
+        $this->assertStringContainsString('switchLanguage', $drawerPanel);
     }
 }

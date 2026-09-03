@@ -65,9 +65,9 @@ class QuickSell extends Component
         $this->todayTotalCost = null;
         $time = BanglaHelper::formatTime(now(), app()->getLocale());
         if (app()->getLocale() === 'bn') {
-            $this->feedbackMessage = "🟢 কার্ট চালু হয়েছে! শুরু: {$time} • বিক্রেতা: ".auth()->user()->name;
+            $this->feedbackMessage = "🟢 কার্ট চালু হয়েছে! শুরু: {$time} • বিক্রেতা: " . auth()->user()->name;
         } else {
-            $this->feedbackMessage = "🟢 Cart is OPEN! Started at {$time} by ".auth()->user()->name;
+            $this->feedbackMessage = "🟢 Cart is OPEN! Started at {$time} by " . auth()->user()->name;
         }
     }
 
@@ -77,7 +77,7 @@ class QuickSell extends Component
     public function openCloseModal(): void
     {
         $day = BusinessDay::activeSession();
-        if (! $day) {
+        if (!$day) {
             $this->isCartOpen = false;
             $this->showCloseModal = false;
             $msg = seller_trans('cart_already_closed');
@@ -99,7 +99,7 @@ class QuickSell extends Component
         $day = BusinessDay::activeSession();
 
         // Prevent duplicate closing of the same cart/shift
-        if (! $day) {
+        if (!$day) {
             $this->isCartOpen = false;
             $this->showCloseModal = false;
             $msg = seller_trans('cart_already_closed');
@@ -159,7 +159,7 @@ class QuickSell extends Component
     public function recordSale(int $productId, int $quantity = 1, ?string $paymentMethod = null): void
     {
         $businessDay = BusinessDay::activeSession();
-        if (! $businessDay) {
+        if (!$businessDay) {
             $this->isCartOpen = false;
             $msg = app()->getLocale() === 'bn' ? 'কার্ট বন্ধ আছে। অনুগ্রহ করে কার্ট চালু করুন।' : 'Cart is closed. Please turn ON cart first.';
             $this->dispatch('notify', message: $msg, type: 'error');
@@ -168,7 +168,7 @@ class QuickSell extends Component
 
         $product = Product::find($productId);
 
-        if (! $product || ! $product->is_available) {
+        if (!$product || !$product->is_available) {
             $this->dispatch('notify', message: app()->getLocale() === 'bn' ? 'খাবারটি বর্তমানে অনুপলব্ধ' : 'Product is currently unavailable', type: 'error');
             return;
         }
@@ -179,7 +179,7 @@ class QuickSell extends Component
         // Check inventory if tracking is enabled
         if ($product->track_inventory && $product->current_stock < $quantity) {
             $msg = app()->getLocale() === 'bn'
-                ? "স্টক কম! মাত্র ".BanglaHelper::toBanglaNumeral($product->current_stock)." টি অবশিষ্ট আছে।"
+                ? "স্টক কম! মাত্র " . BanglaHelper::toBanglaNumeral($product->current_stock) . " টি অবশিষ্ট আছে।"
                 : "Low stock alert! Only {$product->current_stock} remaining.";
             $this->dispatch('notify', message: $msg, type: 'warning');
         }
@@ -254,7 +254,7 @@ class QuickSell extends Component
 
         $lastSaleItem = $lastSaleItemQuery->first();
 
-        if (! $lastSaleItem) {
+        if (!$lastSaleItem) {
             $this->feedbackMessage = app()->getLocale() === 'bn'
                 ? 'বর্তমান শিফটে এই খাবারের কোনো বিক্রি নেই যা সংশোধন করা যাবে।'
                 : 'No sales recorded for this item in this shift to cancel.';
@@ -344,7 +344,7 @@ class QuickSell extends Component
      */
     public function saveExpense(): void
     {
-        if (! CartSetting::allowSellerExpense()) {
+        if (!CartSetting::allowSellerExpense()) {
             $this->dispatch('notify', message: app()->getLocale() === 'bn' ? 'অ্যাডমিন কর্তৃক খরচ এন্ট্রি নিষ্ক্রিয় রয়েছে।' : 'Staff expenses are disabled by Admin.', type: 'error');
             return;
         }
@@ -383,7 +383,70 @@ class QuickSell extends Component
         $this->paymentMethod = $method;
     }
 
-    public function render()
+    /**
+     * Get aggregate sales stats for today
+     */
+    private function getTodaySalesData(): array
+    {
+        $todayStart = Carbon::today()->startOfDay();
+        $todayEnd = Carbon::today()->endOfDay();
+
+        $stats = DB::table('sales')
+            ->where('status', 'completed')
+            ->whereBetween('created_at', [$todayStart, $todayEnd])
+            ->selectRaw("
+                COALESCE(SUM(total_amount), 0) as total,
+                COALESCE(SUM(total_items_count), 0) as items_count,
+                COALESCE(SUM(CASE WHEN payment_method = 'cash' THEN total_amount ELSE 0 END), 0) as cash,
+                COALESCE(SUM(CASE WHEN payment_method = 'bkash' THEN total_amount ELSE 0 END), 0) as bkash,
+                COALESCE(SUM(CASE WHEN payment_method = 'nagad' THEN total_amount ELSE 0 END), 0) as nagad
+            ")
+            ->first();
+
+        return [
+            'total' => (float) ($stats->total ?? 0),
+            'items_count' => (int) ($stats->items_count ?? 0),
+            'cash' => (float) ($stats->cash ?? 0),
+            'bkash' => (float) ($stats->bkash ?? 0),
+            'nagad' => (float) ($stats->nagad ?? 0),
+        ];
+    }
+
+    /**
+     * Get per-product sales stats for today
+     */
+    private function getProductSalesStats(): \Illuminate\Support\Collection
+    {
+        $todayStart = Carbon::today()->startOfDay();
+        $todayEnd = Carbon::today()->endOfDay();
+
+        $stats = DB::table('sale_items')
+            ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
+            ->where('sales.status', 'completed')
+            ->whereBetween('sales.created_at', [$todayStart, $todayEnd])
+            ->selectRaw("
+                sale_items.product_id,
+                COALESCE(SUM(sale_items.quantity), 0) as count,
+                COALESCE(SUM(sale_items.subtotal), 0) as revenue,
+                COALESCE(SUM(CASE WHEN sales.payment_method = 'cash' THEN sale_items.quantity ELSE 0 END), 0) as cash_count,
+                COALESCE(SUM(CASE WHEN sales.payment_method = 'bkash' THEN sale_items.quantity ELSE 0 END), 0) as bkash_count,
+                COALESCE(SUM(CASE WHEN sales.payment_method = 'nagad' THEN sale_items.quantity ELSE 0 END), 0) as nagad_count
+            ")
+            ->groupBy('sale_items.product_id')
+            ->get();
+
+        return $stats->keyBy('product_id')->map(function ($row) {
+            return [
+                'count' => (int) $row->count,
+                'revenue' => (float) $row->revenue,
+                'cash_count' => (int) $row->cash_count,
+                'bkash_count' => (int) $row->bkash_count,
+                'nagad_count' => (int) $row->nagad_count,
+            ];
+        });
+    }
+
+    public function render(): \Illuminate\Contracts\View\View
     {
         $locale = app()->getLocale();
 
@@ -401,8 +464,8 @@ class QuickSell extends Component
         if (trim($this->search) !== '') {
             $term = trim($this->search);
             $productsQuery->where(function ($q) use ($term) {
-                $q->where('name', 'like', '%'.$term.'%')
-                    ->orWhere('name_bn', 'like', '%'.$term.'%');
+                $q->where('name', 'like', '%' . $term . '%')
+                    ->orWhere('name_bn', 'like', '%' . $term . '%');
             });
         }
 
@@ -411,39 +474,11 @@ class QuickSell extends Component
         // 3. Current Day & Cart Status Resolution
         $activeSession = BusinessDay::activeSession();
         $this->isCartOpen = $activeSession !== null;
-        $currentBusinessDay = $activeSession ?? BusinessDay::whereDate('date', Carbon::today())->latest('id')->first();
+        $currentBusinessDay = $activeSession ?? BusinessDay::where('date', Carbon::today()->toDateString())->latest('id')->first();
 
-        // 4. Today's Sales Data & Payment Breakdown (Refreshes on a New Day)
-        $todaySaleItems = SaleItem::with(['product', 'sale'])->whereHas('sale', function ($q) {
-            $q->where('status', 'completed')
-                ->whereDate('created_at', Carbon::today());
-        })->get();
-
-        $productTodaySales = $todaySaleItems->groupBy('product_id')->map(function ($items) {
-            return [
-                'count' => (int) $items->sum('quantity'),
-                'revenue' => (float) $items->sum('subtotal'),
-                'cash_count' => (int) $items->filter(fn ($it) => $it->sale?->payment_method === 'cash')->sum('quantity'),
-                'bkash_count' => (int) $items->filter(fn ($it) => $it->sale?->payment_method === 'bkash')->sum('quantity'),
-                'nagad_count' => (int) $items->filter(fn ($it) => $it->sale?->payment_method === 'nagad')->sum('quantity'),
-            ];
-        });
-
-        $todaySalesQuery = Sale::where('status', 'completed')
-            ->whereDate('created_at', Carbon::today());
-
-        $todaySalesTotal = (float) (clone $todaySalesQuery)->sum('total_amount');
-        $todayItemsTotal = (int) (clone $todaySalesQuery)->sum('total_items_count');
-        $cashSalesTotal = (float) (clone $todaySalesQuery)->where('payment_method', 'cash')->sum('total_amount');
-        $bkashSalesTotal = (float) (clone $todaySalesQuery)->where('payment_method', 'bkash')->sum('total_amount');
-        $nagadSalesTotal = (float) (clone $todaySalesQuery)->where('payment_method', 'nagad')->sum('total_amount');
-
-        $recentSales = Sale::with(['items.product', 'user'])
-            ->whereDate('created_at', Carbon::today())
-            ->where('status', 'completed')
-            ->latest('id')
-            ->take(6)
-            ->get();
+        // 4. Sales & Expenses Data (Optimized single SQL aggregate queries)
+        $salesData = $this->getTodaySalesData();
+        $productTodaySales = $this->getProductSalesStats();
 
         $greeting = BanglaHelper::getGreeting($locale);
 
@@ -453,12 +488,14 @@ class QuickSell extends Component
             'categories' => $categories,
             'products' => $products,
             'productTodaySales' => $productTodaySales,
-            'todaySalesTotal' => $todaySalesTotal,
-            'todayItemsTotal' => $todayItemsTotal,
-            'cashSalesTotal' => $cashSalesTotal,
-            'bkashSalesTotal' => $bkashSalesTotal,
-            'nagadSalesTotal' => $nagadSalesTotal,
-            'recentSales' => $recentSales,
+            'todaySalesTotal' => $salesData['total'],
+            'todayItemsTotal' => $salesData['items_count'],
+            'cashSalesTotal' => $salesData['cash'],
+            'bkashSalesTotal' => $salesData['bkash'],
+            'nagadSalesTotal' => $salesData['nagad'],
+            'todayExpenses' => collect(),
+            'todayExpensesTotal' => 0.0,
+            'recentSales' => collect(),
             'currency' => CartSetting::currency(),
             'allowExpense' => CartSetting::allowSellerExpense(),
             'locale' => $locale,

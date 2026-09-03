@@ -14,6 +14,7 @@ class Expense extends Model
         'user_id',
         'business_day_id',
         'title',
+        'description',
         'category',
         'amount',
         'expense_date',
@@ -58,5 +59,10 @@ class Expense extends Model
     public function getCategoryLabelAttribute(): string
     {
         return self::categoryLabels()[$this->category] ?? ucfirst($this->category);
+    }
+
+    public function getDescriptionAttribute(?string $value): string
+    {
+        return $value ?? $this->title ?? '';
     }
 }

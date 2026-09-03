@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">CartFlow</string>
+    <!-- Change this URL to your deployed domain (e.g. https://yourcart.com) or local IP (e.g. http://192.168.1.22:8000) -->
+    <string name="default_url">http://192.168.1.22:8000</string>
+    <string name="offline_title">ইন্টারনেট সংযোগ নেই / No Connection</string>
+    <string name="offline_message">অনুগ্রহ করে ওয়াইফাই বা মোবাইল ডাটা চেক করুন।\nPlease check your WiFi or mobile data connection.</string>
+    <string name="retry_button">আবার চেষ্টা করুন / Retry</string>
+</resources>

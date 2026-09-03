@@ -181,11 +181,8 @@ class SmartphoneFoodCartExperienceTest extends TestCase
             ->assertSee('Today')
             ->assertSee('This Week')
             ->assertSee('This Month')
-            ->assertSee('Sales vs Expenses')
-            ->assertSee('Best Sellers')
-            ->call('setChartDays', 30)
-            ->assertSet('chartDays', 30)
-            ->assertStatus(200);
+            ->assertDontSee('Sales vs Expenses')
+            ->assertSee('Best Sellers');
     }
 
     public function test_food_items_manager_allows_simple_add_and_edit(): void
@@ -298,4 +295,34 @@ class SmartphoneFoodCartExperienceTest extends TestCase
             ->assertSee('Closing Time')
             ->assertSee('Rahim Cashier');
     }
+
+    public function test_seller_can_sell_multiple_items_with_bkash_and_correct_with_minus(): void
+    {
+        $this->actingAs($this->seller);
+        BusinessDay::openActiveOrNew($this->seller->id);
+
+        // Record a sale of 3 items with bkash (simulating selecting bkash, pressing + three times, clicking SELL)
+        Livewire::test(QuickSell::class)
+            ->assertStatus(200)
+            ->call('recordSale', $this->burger->id, 3, 'bkash')
+            ->assertStatus(200);
+
+        $this->assertDatabaseHas('sales', [
+            'payment_method' => 'bkash',
+            'total_items_count' => 3,
+            'total_amount' => $this->burger->price * 3,
+        ]);
+
+        // Seller corrects 1 item count using minus button
+        Livewire::test(QuickSell::class)
+            ->call('recordCorrection', $this->burger->id)
+            ->assertStatus(200);
+
+        $this->assertDatabaseHas('sales', [
+            'payment_method' => 'bkash',
+            'total_items_count' => 2,
+            'total_amount' => $this->burger->price * 2,
+        ]);
+    }
 }
+

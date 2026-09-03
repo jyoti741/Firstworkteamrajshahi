@@ -1,23 +1,33 @@
 {
-  "name": "CartFlow Food Cart Manager",
+  "name": "CartFlow - Food Cart Manager",
   "short_name": "CartFlow",
+  "description": "Smart POS & Street Food Cart Management System",
   "start_url": "/",
+  "id": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#09090b",
-  "theme_color": "#f59e0b",
+  "background_color": "#FBF7F0",
+  "theme_color": "#F26522",
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/apple-touch-icon.png",
-      "sizes": "180x180",
+      "src": "/icon-192.png",
+      "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
       "purpose": "any"
     }
-  ]
+  ],
+  "categories": ["business", "food", "productivity"]
 }

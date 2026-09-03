@@ -67,6 +67,60 @@ class BusinessDay extends Model
         return $this->status === 'closed';
     }
 
+    protected static function booted(): void
+    {
+        static::created(function (BusinessDay $day) {
+            if ($day->opened_at) {
+                CartStatusLog::create([
+                    'business_day_id' => $day->id,
+                    'user_id' => $day->opened_by_id,
+                    'event' => 'opened',
+                    'occurred_at' => $day->opened_at,
+                    'opening_cash_float' => $day->opening_cash_float ?? 0,
+                    'notes' => $day->notes ?: 'Cart opened',
+                ]);
+            }
+
+            if ($day->closed_at) {
+                CartStatusLog::create([
+                    'business_day_id' => $day->id,
+                    'user_id' => $day->closed_by_id,
+                    'event' => 'closed',
+                    'occurred_at' => $day->closed_at,
+                    'closing_cash_amount' => $day->closing_cash_amount,
+                    'closing_cost' => $day->closing_cost ?? 0,
+                    'notes' => $day->notes ?: 'Cart closed',
+                ]);
+            }
+        });
+
+        static::updated(function (BusinessDay $day) {
+            if ($day->wasChanged('closed_at') && $day->closed_at) {
+                CartStatusLog::create([
+                    'business_day_id' => $day->id,
+                    'user_id' => $day->closed_by_id,
+                    'event' => 'closed',
+                    'occurred_at' => $day->closed_at,
+                    'closing_cash_amount' => $day->closing_cash_amount,
+                    'closing_cost' => $day->closing_cost ?? 0,
+                    'sales_total' => (float) $day->sales()->where('status', 'completed')->sum('total_amount'),
+                    'notes' => $day->notes ?: 'Cart closed',
+                ]);
+            }
+
+            if ($day->wasChanged('status') && $day->status === 'open') {
+                CartStatusLog::create([
+                    'business_day_id' => $day->id,
+                    'user_id' => $day->opened_by_id,
+                    'event' => 'opened',
+                    'occurred_at' => now(),
+                    'opening_cash_float' => $day->opening_cash_float ?? 0,
+                    'notes' => 'Cart reopened/started',
+                ]);
+            }
+        });
+    }
+
     /**
      * Start a brand-new open cart session/shift
      */
