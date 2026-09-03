@@ -126,16 +126,7 @@
                         x-text="mobileMode ? '{{ seller_trans('exit_mobile') }}' : '{{ seller_trans('mobile_view') }}'"></span>
                 </button>
 
-                <!-- Notification Bell Button -->
-                <button type="button"
-                    class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white border border-[#EFE7DE] flex items-center justify-center text-[#2B1E16] hover:text-[#F26522] shadow-2xs transition-colors cursor-pointer shrink-0"
-                    title="Notifications">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                    </svg>
-                </button>
+
             </div>
         </div>
     </header>
