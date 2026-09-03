@@ -1,11 +1,11 @@
 <x-layouts::auth :title="__('CartFlow Login')">
     <div class="flex flex-col gap-6">
         <!-- Brand Header -->
-        <div class="flex flex-col items-center text-center -mt-3">
-            <h1 class="text-lg font-black tracking-tight text-white">
+        <div class="flex flex-col items-center text-center gap-1">
+            <h1 class="text-2xl font-black tracking-tight text-white">
                 {{ \App\Models\CartSetting::cartName() }}
             </h1>
-            <p class="text-xs text-zinc-400 max-w-xs mt-0.5">
+            <p class="text-xs text-zinc-400 max-w-xs">
                 Food Cart Management &amp; Fast Sales Tracking System
             </p>
         </div>

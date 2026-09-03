@@ -8,9 +8,9 @@
 <body class="min-h-screen bg-white antialiased dark:bg-linear-to-b dark:from-neutral-950 dark:to-neutral-900">
     <div class="bg-background flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
         <div class="flex w-full max-w-sm flex-col gap-2">
-            <a href="{{ route('home') }}" class="flex flex-col items-center group py-1" wire:navigate>
-                <img src="{{ asset('images/cartflow-brand.png') }}" alt="{{ config('app.name', 'CartFlow') }}"
-                    class="w-48 sm:w-56 h-auto rounded-2xl shadow-xl shadow-orange-500/15 transition-transform group-hover:scale-105 select-none" />
+            <a href="{{ route('home') }}" class="flex flex-col items-center gap-2 font-medium group" wire:navigate>
+                <img src="{{ asset('images/cart-icon.png') }}" alt="{{ config('app.name', 'CartFlow') }}"
+                    class="h-14 w-14 rounded-2xl shadow-xl shadow-orange-500/25 transition-transform group-hover:scale-105 select-none" />
                 <span class="sr-only">{{ config('app.name', 'CartFlow') }}</span>
             </a>
             <div class="flex flex-col gap-6">
