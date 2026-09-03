@@ -28,15 +28,24 @@
 
         <!-- Right: Status Badge & Close/Open Cart Button -->
         <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            <!-- Live Status Mint Capsule -->
-            <div class="px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl bg-[#EAF7EE] border border-[#CDEED5] text-center">
-                <div class="flex items-center justify-center gap-1 text-[9px] sm:text-xs font-bold text-[#1E8E3E]">
-                    <span class="w-1.5 h-1.5 rounded-full bg-[#1E8E3E] animate-pulse"></span>
+            <!-- Live Status Capsule -->
+            <div
+                class="px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl border text-center transition-colors {{ $isCartOpen ? 'bg-[#EAF7EE] border-[#CDEED5]' : 'bg-[#FEF2F2] border-[#FECACA]' }}">
+                <div
+                    class="flex items-center justify-center gap-1 text-[9px] sm:text-xs font-bold {{ $isCartOpen ? 'text-[#1E8E3E]' : 'text-[#DC2626]' }}">
+                    <span
+                        class="w-1.5 h-1.5 rounded-full {{ $isCartOpen ? 'bg-[#1E8E3E] animate-pulse' : 'bg-[#DC2626]' }}"></span>
                     <span>{{ $isCartOpen ? seller_trans('cart_is_open') : seller_trans('cart_is_closed') }}</span>
                 </div>
-                <div class="text-[8px] sm:text-[10px] text-[#1E8E3E] font-semibold leading-none mt-0.5">
-                    {{ $isCartOpen ? seller_trans('opened_at') : seller_trans('closed_at') }}:
-                    {{ $currentBusinessDay?->opened_at ? bn_time($currentBusinessDay->opened_at, $locale) : bn_time(now(), $locale) }}
+                <div
+                    class="text-[8px] sm:text-[10px] font-semibold leading-none mt-0.5 {{ $isCartOpen ? 'text-[#1E8E3E]' : 'text-[#DC2626]' }}">
+                    @if($isCartOpen)
+                        {{ seller_trans('opened_at') }}:
+                        {{ $currentBusinessDay?->opened_at ? bn_time($currentBusinessDay->opened_at, $locale) : bn_time(now(), $locale) }}
+                    @else
+                        {{ seller_trans('closed_at') }}:
+                        {{ $currentBusinessDay?->closed_at ? bn_time($currentBusinessDay->closed_at, $locale) : '—' }}
+                    @endif
                 </div>
             </div>
 

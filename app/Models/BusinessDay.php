@@ -163,7 +163,7 @@ class BusinessDay extends Model
                 'status' => 'open',
                 'closed_at' => null,
                 'closed_by_id' => null,
-                'opened_at' => $todayRecord->opened_at ?? now(),
+                'opened_at' => ($todayRecord->status === 'closed' || $todayRecord->closed_at !== null) ? now() : ($todayRecord->opened_at ?? now()),
                 'opened_by_id' => $userId ?? auth()->id() ?? $todayRecord->opened_by_id,
             ]);
 
