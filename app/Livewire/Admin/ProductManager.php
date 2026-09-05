@@ -2,17 +2,21 @@
 
 namespace App\Livewire\Admin;
 
+use App\Helpers\FoodImageHelper;
 use App\Models\CartSetting;
 use App\Models\Category;
 use App\Models\Product;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 #[Layout('layouts.admin')]
 #[Title('Food Items & Pricing Management')]
 class ProductManager extends Component
 {
+    use WithFileUploads;
+
     public string $activeTab = 'products'; // 'products', 'categories'
     public string $categoryFilter = 'all';
     public string $search = '';
@@ -25,14 +29,23 @@ class ProductManager extends Component
     public ?int $category_id = null;
     public string $description = '';
     public ?float $price = null;
-    public ?float $cost_price = 0.0;
+    public ?float $cost_price = 0.0; // Kept as internal property for backward DB/test compatibility
     public string $image_emoji = '🍔';
+    public $photo = null;
+    public ?string $image_path = null;
+    public ?string $suggested_image_title = null;
+    public bool $is_suggested = false;
+    public bool $showPresetGallery = false;
     public int $current_stock = 0;
     public bool $track_inventory = true;
     public bool $is_available = true;
     public int $sort_order = 0;
 
-    // Category Modal state
+    // Inline Category creation in Add/Edit form
+    public bool $showNewCategoryInput = false;
+    public string $newCategoryName = '';
+
+    // Category Modal state (inline from + button or categories tab)
     public bool $showCategoryModal = false;
     public ?int $editingCategoryId = null;
     public string $categoryName = '';
@@ -40,17 +53,147 @@ class ProductManager extends Component
     public string $categoryIcon = '🍔';
     public int $categorySortOrder = 0;
 
+    // Category Selection Action Popup State (Pop up shown ONLY when category is selected)
+    public bool $showCategoryActionModal = false;
+    public ?int $actionCategoryId = null;
+
+    // Edit Category Modal
+    public bool $showEditCategoryModal = false;
+    public string $editCategoryName = '';
+    public string $editCategoryNameBn = '';
+
+    // Delete Category Modal
+    public bool $showDeleteCategoryModal = false;
+    public ?int $deletingCategoryId = null;
+    public ?string $deletingCategoryName = null;
+
     public function openAddProductModal(): void
     {
         $this->reset([
-            'editingProductId', 'name', 'name_bn', 'description', 'price', 
-            'cost_price', 'current_stock', 'sort_order'
+            'editingProductId',
+            'name',
+            'name_bn',
+            'description',
+            'price',
+            'cost_price',
+            'photo',
+            'image_path',
+            'suggested_image_title',
+            'is_suggested',
+            'showPresetGallery',
+            'showNewCategoryInput',
+            'newCategoryName',
+            'current_stock',
+            'sort_order',
+            'showCategoryActionModal',
+            'actionCategoryId',
+            'showEditCategoryModal',
+            'showDeleteCategoryModal',
         ]);
         $this->image_emoji = '🍔';
-        $this->category_id = Category::first()?->id;
+        $this->category_id = null;
         $this->track_inventory = true;
         $this->is_available = true;
         $this->showProductModal = true;
+    }
+
+    public function updatedCategoryId($val): void
+    {
+        $valInt = $val ? (int) $val : null;
+        if ($valInt && Category::where('id', $valInt)->exists()) {
+            $this->actionCategoryId = $valInt;
+            $this->showCategoryActionModal = true;
+        } else {
+            $this->showCategoryActionModal = false;
+            $this->actionCategoryId = null;
+        }
+    }
+
+    public function selectCategoryAction(?int $id): void
+    {
+        if ($id && Category::where('id', $id)->exists()) {
+            $this->category_id = $id;
+            $this->actionCategoryId = $id;
+            $this->showCategoryActionModal = true;
+        }
+    }
+
+    public function closeCategoryActionModal(): void
+    {
+        $this->showCategoryActionModal = false;
+    }
+
+    public function openEditCategoryModal(?int $id = null): void
+    {
+        $catId = $id ?: $this->actionCategoryId ?: $this->category_id;
+        if (!$catId) return;
+
+        $category = Category::findOrFail($catId);
+        $this->editingCategoryId = $category->id;
+        $this->editCategoryName = $category->name;
+        $this->editCategoryNameBn = $category->name_bn ?? '';
+        $this->showEditCategoryModal = true;
+        $this->showCategoryActionModal = false;
+    }
+
+    public function saveEditedCategory(): void
+    {
+        $this->validate([
+            'editCategoryName' => 'required|string|max:100',
+            'editCategoryNameBn' => 'nullable|string|max:100',
+        ]);
+
+        $category = Category::findOrFail($this->editingCategoryId);
+
+        $name = trim($this->editCategoryName);
+        $isBangla = (bool) preg_match('/[\x{0980}-\x{09FF}]/u', $name);
+        $nameBn = $this->editCategoryNameBn ?: ($isBangla ? $name : Category::translateToBangla($name));
+
+        $category->update([
+            'name' => $name,
+            'name_bn' => $nameBn,
+        ]);
+
+        $this->category_id = $category->id;
+        $this->showEditCategoryModal = false;
+        session()->flash('success', "Category '{$category->name}' updated.");
+    }
+
+    public function openDeleteCategoryModal(?int $id = null): void
+    {
+        $catId = $id ?: $this->actionCategoryId ?: $this->category_id;
+        if (!$catId) return;
+
+        $category = Category::findOrFail($catId);
+        $this->deletingCategoryId = $category->id;
+        $this->deletingCategoryName = $category->name;
+        $this->showDeleteCategoryModal = true;
+        $this->showCategoryActionModal = false;
+    }
+
+    public function confirmDeleteCategory(): void
+    {
+        if ($this->deletingCategoryId) {
+            $category = Category::find($this->deletingCategoryId);
+            if ($category) {
+                $name = $category->name;
+                $category->products()->update(['category_id' => null]);
+                $category->delete();
+
+                if ($this->category_id === $this->deletingCategoryId) {
+                    $this->category_id = null;
+                }
+                if ((string) $this->categoryFilter === (string) $this->deletingCategoryId) {
+                    $this->categoryFilter = 'all';
+                }
+                session()->flash('success', "Category '{$name}' deleted.");
+            }
+        }
+
+        $this->showDeleteCategoryModal = false;
+        $this->deletingCategoryId = null;
+        $this->deletingCategoryName = null;
+        $this->showCategoryActionModal = false;
     }
 
     public function editProduct(int $id): void
@@ -64,11 +207,70 @@ class ProductManager extends Component
         $this->price = (float) $product->price;
         $this->cost_price = (float) $product->cost_price;
         $this->image_emoji = $product->image_emoji ?? '🍔';
+        $this->image_path = $product->image_path;
+        $this->photo = null;
+        $this->showPresetGallery = false;
+        $this->showNewCategoryInput = false;
+        $this->newCategoryName = '';
+        $this->is_suggested = $product->image_path && str_starts_with($product->image_path, 'images/');
+        $this->suggested_image_title = null;
+
+        if ($this->is_suggested) {
+            foreach (FoodImageHelper::$availableImages as $img) {
+                if ($img['path'] === $product->image_path) {
+                    $this->suggested_image_title = $img['name'];
+                    break;
+                }
+            }
+        }
+
         $this->current_stock = $product->current_stock;
         $this->track_inventory = $product->track_inventory;
         $this->is_available = $product->is_available;
         $this->sort_order = $product->sort_order;
         $this->showProductModal = true;
+    }
+
+    public function updatedPhoto(): void
+    {
+        $this->validate([
+            'photo' => 'image|max:5120', // 5MB max
+        ]);
+        $this->is_suggested = false;
+        $this->suggested_image_title = null;
+    }
+
+    public function suggestPicture(): void
+    {
+        $match = FoodImageHelper::matchImage($this->name, $this->name_bn, $this->category_id);
+        $this->image_path = $match['path'];
+        $this->image_emoji = $match['emoji'] ?? '🍔';
+        $this->suggested_image_title = $match['name'] ?? null;
+        $this->photo = null;
+        $this->is_suggested = true;
+    }
+
+    public function selectSuggestedPicture(string $path, string $emoji, string $name): void
+    {
+        $this->image_path = $path;
+        $this->image_emoji = $emoji;
+        $this->suggested_image_title = $name;
+        $this->photo = null;
+        $this->is_suggested = true;
+        $this->showPresetGallery = false;
+    }
+
+    public function removePicture(): void
+    {
+        $this->photo = null;
+        $this->image_path = null;
+        $this->suggested_image_title = null;
+        $this->is_suggested = false;
+    }
+
+    public function togglePresetGallery(): void
+    {
+        $this->showPresetGallery = !$this->showPresetGallery;
     }
 
     public function saveProduct(): void
@@ -82,7 +284,13 @@ class ProductManager extends Component
             'category_id' => 'nullable|exists:categories,id',
             'current_stock' => 'nullable|integer|min:0',
             'description' => 'nullable|string|max:500',
+            'photo' => 'nullable|image|max:5120',
         ]);
+
+        $finalImagePath = $this->image_path;
+        if ($this->photo) {
+            $finalImagePath = $this->photo->store('products', 'public');
+        }
 
         $defaultCatId = $this->category_id ?: Category::first()?->id ?: Category::create(['name' => 'General', 'name_bn' => 'সাধারণ', 'icon' => '🍔'])->id;
 
@@ -94,6 +302,7 @@ class ProductManager extends Component
             'price' => $this->price,
             'cost_price' => $this->cost_price ?? 0,
             'image_emoji' => $this->image_emoji ?: '🍔',
+            'image_path' => $finalImagePath,
             'current_stock' => $this->current_stock ?? 50,
             'track_inventory' => $this->track_inventory,
             'is_available' => $this->is_available,
@@ -114,7 +323,7 @@ class ProductManager extends Component
     public function toggleAvailability(int $id): void
     {
         $product = Product::findOrFail($id);
-        $product->is_available = ! $product->is_available;
+        $product->is_available = !$product->is_available;
         $product->save();
     }
 
@@ -124,12 +333,54 @@ class ProductManager extends Component
         session()->flash('success', 'Food item removed.');
     }
 
+    // Inline Category Methods for Add/Edit Food Item Form
+    public function openInlineCategoryInput(): void
+    {
+        $this->newCategoryName = '';
+        $this->showNewCategoryInput = true;
+    }
+
+    public function closeInlineCategoryInput(): void
+    {
+        $this->newCategoryName = '';
+        $this->showNewCategoryInput = false;
+    }
+
+    public function saveInlineCategory(): void
+    {
+        $this->validate([
+            'newCategoryName' => 'required|string|max:100',
+        ]);
+
+        $name = trim($this->newCategoryName);
+        $isBangla = (bool) preg_match('/[\x{0980}-\x{09FF}]/u', $name);
+
+        $cat = Category::create([
+            'name' => $name,
+            'name_bn' => $isBangla ? $name : null,
+            'icon' => '🍲',
+            'sort_order' => (Category::max('sort_order') ?? 0) + 1,
+        ]);
+
+        $this->category_id = $cat->id;
+        $this->newCategoryName = '';
+        $this->showNewCategoryInput = false;
+        session()->flash('success', "Category '{$cat->name}' created and selected.");
+    }
+
     // Category Methods
     public function openAddCategoryModal(): void
     {
         $this->reset(['editingCategoryId', 'categoryName', 'categoryNameBn', 'categorySortOrder']);
         $this->categoryIcon = '🍔';
         $this->showCategoryModal = true;
+    }
+
+    public function quickFillCategory(string $en, string $bn, string $icon = '🍔'): void
+    {
+        $this->categoryName = $en;
+        $this->categoryNameBn = $bn;
+        $this->categoryIcon = $icon;
     }
 
     public function editCategory(int $id): void
@@ -152,19 +403,24 @@ class ProductManager extends Component
             'categorySortOrder' => 'integer',
         ]);
 
+        $isBangla = (bool) preg_match('/[\x{0980}-\x{09FF}]/u', $this->categoryName);
+        $nameBn = $this->categoryNameBn ?: ($isBangla ? $this->categoryName : null);
+
         $data = [
             'name' => $this->categoryName,
-            'name_bn' => $this->categoryNameBn ?: null,
+            'name_bn' => $nameBn,
             'icon' => $this->categoryIcon ?: '🍔',
             'sort_order' => $this->categorySortOrder,
         ];
 
         if ($this->editingCategoryId) {
-            Category::findOrFail($this->editingCategoryId)->update($data);
-            session()->flash('success', 'Category updated.');
+            $cat = Category::findOrFail($this->editingCategoryId);
+            $cat->update($data);
+            session()->flash('success', "Category '{$cat->name}' updated.");
         } else {
-            Category::create($data);
-            session()->flash('success', 'New category created.');
+            $cat = Category::create($data);
+            $this->category_id = $cat->id; // Automatically select the newly created category!
+            session()->flash('success', "Category '{$cat->name}' created and selected.");
         }
 
         $this->showCategoryModal = false;
@@ -189,8 +445,8 @@ class ProductManager extends Component
         if (trim($this->search) !== '') {
             $term = trim($this->search);
             $query->where(function ($q) use ($term) {
-                $q->where('name', 'like', '%'.$term.'%')
-                    ->orWhere('name_bn', 'like', '%'.$term.'%');
+                $q->where('name', 'like', '%' . $term . '%')
+                    ->orWhere('name_bn', 'like', '%' . $term . '%');
             });
         }
 
@@ -199,6 +455,7 @@ class ProductManager extends Component
         return view('livewire.admin.product-manager', [
             'products' => $products,
             'categories' => $categories,
+            'presetImages' => FoodImageHelper::$availableImages,
             'currency' => CartSetting::currency(),
         ]);
     }

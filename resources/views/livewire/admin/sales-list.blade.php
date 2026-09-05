@@ -88,7 +88,13 @@
                 <div
                     class="bg-[#F8F3EA] border border-[#EFE7DE] rounded-2xl p-2.5 sm:p-3 flex items-center justify-between gap-2.5 text-xs sm:text-sm">
                     <div class="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1">
-                        <span class="text-lg sm:text-xl shrink-0">{{ $item->product?->image_emoji ?? '🍔' }}</span>
+                        <div class="w-6 h-6 rounded-lg overflow-hidden shrink-0 flex items-center justify-center bg-white border border-[#EFE7DE]">
+                            @if($item->product?->image_url)
+                                <img src="{{ $item->product->image_url }}" alt="" class="w-full h-full object-cover">
+                            @else
+                                <span class="text-sm select-none">{{ $item->product?->image_emoji ?? '🍔' }}</span>
+                            @endif
+                        </div>
                         <div class="min-w-0 flex-1">
                             <span class="font-bold text-[#2B1E16] truncate block">{{ $item->product_name }}</span>
                         </div>

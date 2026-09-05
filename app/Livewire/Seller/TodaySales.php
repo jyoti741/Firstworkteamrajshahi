@@ -107,6 +107,11 @@ class TodaySales extends Component
             'cashTotal' => $cashTotal,
             'bkashTotal' => $bkashTotal,
             'nagadTotal' => $nagadTotal,
+            'todaySalesTotal' => $totalRevenue,
+            'todayItemsTotal' => $totalItems,
+            'cashSalesTotal' => $cashTotal,
+            'bkashSalesTotal' => $bkashTotal,
+            'nagadSalesTotal' => $nagadTotal,
             'currency' => CartSetting::currency(),
             'locale' => $locale,
         ]);

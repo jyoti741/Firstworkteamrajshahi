@@ -231,10 +231,11 @@ class SellerBanglaLanguageSwitchingTest extends TestCase
             ->assertStatus(200)
             ->assertSee('আজকের বিক্রির তালিকা')
             ->assertSee('দ্রুত বিক্রি-তে ফিরুন')
-            ->assertSee('মোট আয়')
+            ->assertSee('আজকের বিক্রি')
             ->assertSee('মোট বিক্রিত আইটেম')
-            ->assertSee('সংগৃহীত ক্যাশ')
-            ->assertSee('ডিজিটাল পেমেন্ট')
+            ->assertSee('ক্যাশ')
+            ->assertSee('বিকাশ')
+            ->assertSee('নগদ')
             ->assertSee('ক্লাসিক বার্গার')
             ->assertSee('৳১৫০');
     }

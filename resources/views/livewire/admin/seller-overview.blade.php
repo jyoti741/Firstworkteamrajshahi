@@ -375,9 +375,13 @@
                             <span class="w-5 text-center font-black text-[#F26522] text-xs sm:text-sm">
                                 {{ $loop->iteration }}.
                             </span>
-                            <span class="text-xl">
-                                {{ $item->product?->image_emoji ?? '🍔' }}
-                            </span>
+                            <div class="w-7 h-7 rounded-lg overflow-hidden shrink-0 flex items-center justify-center bg-white border border-[#EFE7DE]">
+                                @if($item->product?->image_url)
+                                    <img src="{{ $item->product->image_url }}" alt="" class="w-full h-full object-cover">
+                                @else
+                                    <span class="text-base select-none">{{ $item->product?->image_emoji ?? '🍔' }}</span>
+                                @endif
+                            </div>
                             <div>
                                 <span class="font-bold text-[#2B1E16] text-xs sm:text-sm">{{ $item->product_name }}</span>
                             </div>
