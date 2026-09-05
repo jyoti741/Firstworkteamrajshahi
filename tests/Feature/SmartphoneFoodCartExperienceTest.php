@@ -206,6 +206,118 @@ class SmartphoneFoodCartExperienceTest extends TestCase
         ]);
     }
 
+    public function test_product_modal_has_no_cost_price_input_and_has_category_plus_edit_delete_options(): void
+    {
+        $this->actingAs($this->admin);
+
+        Livewire::test(ProductManager::class)
+            ->call('openAddProductModal')
+            ->assertDontSee('Cost Price')
+            ->assertSee('Selling Price')
+            ->call('toggleInlineCategoryAdd')
+            ->assertSee('Category Name in English')
+            ->assertSee('বাংলা নাম')
+            ->set('inlineCategoryName', 'Shawarma')
+            ->set('inlineCategoryNameBn', 'শর্মা')
+            ->call('saveInlineCategory')
+            ->assertStatus(200);
+
+        $this->assertDatabaseHas('categories', [
+            'name' => 'Shawarma',
+        ]);
+
+        $createdCategory = Category::where('name', 'Shawarma')->first();
+        $this->assertNotNull($createdCategory);
+
+        Livewire::test(ProductManager::class)
+            ->call('openAddProductModal')
+            ->set('category_id', $createdCategory->id)
+            ->call('startInlineCategoryEdit')
+            ->assertSee('Edit Category Name')
+            ->set('inlineCategoryName', 'Special Shawarma')
+            ->call('saveInlineCategory')
+            ->assertStatus(200);
+
+        $this->assertDatabaseHas('categories', [
+            'name' => 'Special Shawarma',
+        ]);
+
+        Livewire::test(ProductManager::class)
+            ->call('openAddProductModal')
+            ->set('category_id', $createdCategory->id)
+            ->call('deleteSelectedCategory')
+            ->assertStatus(200);
+
+        $this->assertDatabaseMissing('categories', [
+            'name' => 'Special Shawarma',
+        ]);
+    }
+
+    public function test_product_manager_automatic_emoji_suggestion_and_manual_preservation(): void
+    {
+        $this->actingAs($this->admin);
+
+        $examples = [
+            'Fuchka' => '🥣',
+            'ফুচকা' => '🥣',
+            'Chotpoti' => '🥣',
+            'চটপটি' => '🥣',
+            'Burger' => '🍔',
+            'বার্গার' => '🍔',
+            'Pizza' => '🍕',
+            'পিজ্জা' => '🍕',
+            'Biryani' => '🍚',
+            'বিরিয়ানি' => '🍚',
+            'Rice' => '🍚',
+            'ভাত' => '🍚',
+            'Singara' => '🥟',
+            'সিঙ্গারা' => '🥟',
+            'Samosa' => '🥟',
+            'সমুচা' => '🥟',
+            'Noodles' => '🍜',
+            'নুডলস' => '🍜',
+            'Chicken' => '🍗',
+            'চিকেন' => '🍗',
+            'Fish' => '🐟',
+            'মাছ' => '🐟',
+            'Tea' => '☕',
+            'চা' => '☕',
+            'Coffee' => '☕',
+            'কফি' => '☕',
+            'Juice' => '🧃',
+            'জুস' => '🧃',
+            'Ice Cream' => '🍦',
+            'আইসক্রিম' => '🍦',
+            'Cake' => '🍰',
+            'কেক' => '🍰',
+            'Unknown Food 123' => '🍽️',
+        ];
+
+        foreach ($examples as $name => $expectedEmoji) {
+            Livewire::test(ProductManager::class)
+                ->call('openAddProductModal')
+                ->set('name', $name)
+                ->assertSet('image_emoji', $expectedEmoji);
+        }
+
+        // Test manual selection and preservation
+        Livewire::test(ProductManager::class)
+            ->call('openAddProductModal')
+            ->assertSee('Suggested Emoji')
+            ->assertSee('Change')
+            ->set('name', 'Burger')
+            ->assertSet('image_emoji', '🍔')
+            // User manually changes emoji to 🌯
+            ->call('selectEmoji', '🌯')
+            ->assertSet('image_emoji', '🌯')
+            // User now changes the item name to Pizza -> emoji remains 🌯 because manual selection is preserved!
+            ->set('name', 'Pizza')
+            ->assertSet('image_emoji', '🌯')
+            // Reset to auto -> detects Pizza 🍕
+            ->call('resetToAutoEmoji')
+            ->assertSet('image_emoji', '🍕');
+    }
+
     public function test_seller_manager_allows_adding_and_toggling_status(): void
     {
         $this->actingAs($this->admin);

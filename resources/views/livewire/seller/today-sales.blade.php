@@ -18,51 +18,69 @@
         </a>
     </div>
 
-    <!-- Summary Metrics Grid (4 Equal White Cards) -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5">
-        <!-- Total Revenue -->
-        <div class="bg-white border border-[#EFE7DE] rounded-2xl p-3 flex flex-col justify-between shadow-2xs">
-            <span
-                class="text-[10px] sm:text-[11px] text-[#8D7B70] font-bold uppercase tracking-wide truncate">{{ seller_trans('total_revenue') }}</span>
-            <span class="text-base sm:text-xl font-black text-[#1E8E3E] mt-0.5 tracking-tight">
-                {{ bn_curr($totalRevenue, $locale, 0) }}
-            </span>
-            <span
-                class="text-[9px] sm:text-[10px] text-[#8D7B70] mt-0.5 font-medium">{{ bn_num($totalOrders, $locale) }}
-                {{ seller_trans('completed_orders') }}</span>
-        </div>
+    <!-- Today's Summary Card (Money Bag on Left + 3 Mini Payment Method Tiles on Right - Exact Mockup Match) -->
+    <div class="bg-white rounded-2xl border border-[#EFE7DE] p-3 sm:p-4 shadow-2xs">
+        <div class="flex items-center justify-between gap-2 sm:gap-3">
+            <!-- Left: Sales Total & Money Bag -->
+            <div class="flex items-center justify-between sm:justify-start gap-2 sm:gap-4 flex-1 min-w-0">
+                <div class="min-w-0">
+                    <span
+                        class="text-[10px] sm:text-xs font-bold text-[#2B1E16] block truncate">{{ seller_trans('today_sales') }}</span>
+                    <div class="text-xl sm:text-3xl font-black text-[#F26522] tracking-tight mt-0.5">
+                        {{ bn_curr($totalRevenue, $locale, 0) }}
+                    </div>
+                    <p class="text-[10px] sm:text-[11px] text-[#8D7B70] font-medium mt-0.5 truncate">
+                        {{ seller_trans('total_items_sold') }}: <span
+                            class="font-bold text-[#2B1E16]">{{ bn_num($totalItems, $locale) }}
+                            {{ seller_trans('items_unit') }}</span>
+                    </p>
+                </div>
+                <div class="text-3xl sm:text-5xl shrink-0 select-none">
+                    💰
+                </div>
+            </div>
 
-        <!-- Items Sold -->
-        <div class="bg-white border border-[#EFE7DE] rounded-2xl p-3 flex flex-col justify-between shadow-2xs">
-            <span
-                class="text-[10px] sm:text-[11px] text-[#8D7B70] font-bold uppercase tracking-wide truncate">{{ seller_trans('items_sold') }}</span>
-            <span class="text-base sm:text-xl font-black text-[#F26522] mt-0.5 tracking-tight">
-                {{ bn_num($totalItems, $locale) }}
-            </span>
-            <span
-                class="text-[9px] sm:text-[10px] text-[#8D7B70] mt-0.5 font-medium">{{ seller_trans('units_prepared') }}</span>
-        </div>
+            <!-- Right: 3 Mini Payment Breakdown Tiles -->
+            <div class="grid grid-cols-3 gap-1 sm:gap-2 shrink-0">
+                <!-- Cash Tile -->
+                <div
+                    class="bg-[#F8F3EA] rounded-xl p-1.5 sm:p-2 text-center border border-[#EFE7DE]/80 min-w-[54px] sm:min-w-[80px]">
+                    <span
+                        class="text-[9px] sm:text-[10px] font-bold text-[#1E8E3E] inline-flex items-center justify-center gap-0.5 sm:gap-1">
+                        <x-icon-cash class="w-3 h-2 sm:w-3.5 sm:h-2.5 shrink-0" />
+                        <span>{{ seller_trans('cash') }}</span>
+                    </span>
+                    <div class="text-[11px] sm:text-sm font-extrabold text-[#2B1E16] mt-0.5 sm:mt-1">
+                        {{ bn_curr($cashTotal, $locale, 0) }}
+                    </div>
+                </div>
 
-        <!-- Cash Collected -->
-        <div class="bg-white border border-[#EFE7DE] rounded-2xl p-3 flex flex-col justify-between shadow-2xs">
-            <span
-                class="text-[10px] sm:text-[11px] text-[#8D7B70] font-bold uppercase tracking-wide truncate">{{ seller_trans('cash_collected') }}</span>
-            <span class="text-base sm:text-xl font-black text-[#2B1E16] mt-0.5 tracking-tight">
-                {{ bn_curr($cashTotal, $locale, 0) }}
-            </span>
-            <span
-                class="text-[9px] sm:text-[10px] text-[#8D7B70] mt-0.5 font-medium">{{ seller_trans('cash_drawer') }}</span>
-        </div>
+                <!-- bKash Tile -->
+                <div
+                    class="bg-[#F8F3EA] rounded-xl p-1.5 sm:p-2 text-center border border-[#EFE7DE]/80 min-w-[54px] sm:min-w-[80px]">
+                    <span
+                        class="text-[9px] sm:text-[10px] font-bold text-[#BE185D] inline-flex items-center justify-center gap-0.5 sm:gap-1">
+                        <x-icon-bkash class="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+                        <span>{{ seller_trans('bkash') }}</span>
+                    </span>
+                    <div class="text-[11px] sm:text-sm font-extrabold text-[#2B1E16] mt-0.5 sm:mt-1">
+                        {{ bn_curr($bkashTotal, $locale, 0) }}
+                    </div>
+                </div>
 
-        <!-- Digital Payments (bKash + Nagad) -->
-        <div class="bg-white border border-[#EFE7DE] rounded-2xl p-3 flex flex-col justify-between shadow-2xs">
-            <span
-                class="text-[10px] sm:text-[11px] text-[#8D7B70] font-bold uppercase tracking-wide truncate">{{ seller_trans('digital_payments') }}</span>
-            <span class="text-base sm:text-xl font-black text-[#BE185D] mt-0.5 tracking-tight">
-                {{ bn_curr($bkashTotal + $nagadTotal, $locale, 0) }}
-            </span>
-            <span
-                class="text-[9px] sm:text-[10px] text-[#8D7B70] mt-0.5 font-medium">{{ seller_trans('mfs_received') }}</span>
+                <!-- Nagad Tile -->
+                <div
+                    class="bg-[#F8F3EA] rounded-xl p-1.5 sm:p-2 text-center border border-[#EFE7DE]/80 min-w-[54px] sm:min-w-[80px]">
+                    <span
+                        class="text-[9px] sm:text-[10px] font-bold text-[#C2410C] inline-flex items-center justify-center gap-0.5 sm:gap-1">
+                        <x-icon-nagad class="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+                        <span>{{ seller_trans('nagad') }}</span>
+                    </span>
+                    <div class="text-[11px] sm:text-sm font-extrabold text-[#2B1E16] mt-0.5 sm:mt-1">
+                        {{ bn_curr($nagadTotal, $locale, 0) }}
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

@@ -231,10 +231,11 @@ class SellerBanglaLanguageSwitchingTest extends TestCase
             ->assertStatus(200)
             ->assertSee('আজকের বিক্রির তালিকা')
             ->assertSee('দ্রুত বিক্রি-তে ফিরুন')
-            ->assertSee('মোট আয়')
+            ->assertSee('আজকের বিক্রি')
             ->assertSee('মোট বিক্রিত আইটেম')
-            ->assertSee('সংগৃহীত ক্যাশ')
-            ->assertSee('ডিজিটাল পেমেন্ট')
+            ->assertSee('ক্যাশ')
+            ->assertSee('বিকাশ')
+            ->assertSee('নগদ')
             ->assertSee('ক্লাসিক বার্গার')
             ->assertSee('৳১৫০');
     }
@@ -294,5 +295,24 @@ class SellerBanglaLanguageSwitchingTest extends TestCase
         $drawerPart = explode('<!-- Seller Hamburger Slideover Menu Drawer -->', $content)[1] ?? '';
         $drawerPanel = explode('<!-- Alert / Toast Notification Area -->', $drawerPart)[0] ?? '';
         $this->assertStringContainsString('switchLanguage', $drawerPanel);
+    }
+
+    public function test_category_names_convert_to_bangla_in_quick_sell_when_seller_selects_bangla(): void
+    {
+        Category::create([
+            'name' => 'Drinks',
+            'name_bn' => 'ড্রিংকস',
+            'icon' => '🥤',
+            'sort_order' => 2,
+        ]);
+
+        $this->seller->update(['locale' => 'bn']);
+        $this->actingAs($this->seller);
+        session(['seller_locale' => 'bn']);
+
+        Livewire::test(QuickSell::class)
+            ->assertStatus(200)
+            ->assertSee('বার্গার')
+            ->assertSee('ড্রিংকস');
     }
 }

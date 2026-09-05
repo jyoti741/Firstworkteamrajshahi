@@ -79,84 +79,18 @@
         </div>
     @endif
 
-    <!-- 3. Today's Summary Card (Money Bag on Left + 3 Mini Metric Tiles on Right - Exact Mockup Match) -->
-    <div class="bg-white rounded-2xl border border-[#EFE7DE] p-3 sm:p-4 shadow-2xs">
-        <div class="flex items-center justify-between gap-2 sm:gap-3">
-            <!-- Left: Sales Total & Money Bag -->
-            <div class="flex items-center justify-between sm:justify-start gap-2 sm:gap-4 flex-1 min-w-0">
-                <div class="min-w-0">
-                    <span
-                        class="text-[10px] sm:text-xs font-bold text-[#2B1E16] block truncate">{{ seller_trans('today_sales') }}</span>
-                    <div class="text-xl sm:text-3xl font-black text-[#F26522] tracking-tight mt-0.5">
-                        {{ bn_curr($todaySalesTotal, $locale, 0) }}
-                    </div>
-                    <p class="text-[10px] sm:text-[11px] text-[#8D7B70] font-medium mt-0.5 truncate">
-                        {{ seller_trans('total_items_sold') }}: <span
-                            class="font-bold text-[#2B1E16]">{{ bn_num($todayItemsTotal, $locale) }}
-                            {{ seller_trans('items_unit') }}</span>
-                    </p>
-                </div>
-                <div class="text-3xl sm:text-5xl shrink-0 select-none">
-                    💰
-                </div>
-            </div>
-
-            <!-- Right: 3 Mini Payment Breakdown Tiles -->
-            <div class="grid grid-cols-3 gap-1 sm:gap-2 shrink-0">
-                <!-- Cash Tile -->
-                <div
-                    class="bg-[#F8F3EA] rounded-xl p-1.5 sm:p-2 text-center border border-[#EFE7DE]/80 min-w-[54px] sm:min-w-[80px]">
-                    <span
-                        class="text-[9px] sm:text-[10px] font-bold text-[#1E8E3E] inline-flex items-center justify-center gap-0.5 sm:gap-1">
-                        <x-icon-cash class="w-3 h-2 sm:w-3.5 sm:h-2.5 shrink-0" />
-                        <span>{{ seller_trans('cash') }}</span>
-                    </span>
-                    <div class="text-[11px] sm:text-sm font-extrabold text-[#2B1E16] mt-0.5 sm:mt-1">
-                        {{ bn_curr($cashSalesTotal, $locale, 0) }}
-                    </div>
-                </div>
-
-                <!-- bKash Tile -->
-                <div
-                    class="bg-[#F8F3EA] rounded-xl p-1.5 sm:p-2 text-center border border-[#EFE7DE]/80 min-w-[54px] sm:min-w-[80px]">
-                    <span
-                        class="text-[9px] sm:text-[10px] font-bold text-[#BE185D] inline-flex items-center justify-center gap-0.5 sm:gap-1">
-                        <x-icon-bkash class="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-                        <span>{{ seller_trans('bkash') }}</span>
-                    </span>
-                    <div class="text-[11px] sm:text-sm font-extrabold text-[#2B1E16] mt-0.5 sm:mt-1">
-                        {{ bn_curr($bkashSalesTotal, $locale, 0) }}
-                    </div>
-                </div>
-
-                <!-- Nagad Tile -->
-                <div
-                    class="bg-[#F8F3EA] rounded-xl p-1.5 sm:p-2 text-center border border-[#EFE7DE]/80 min-w-[54px] sm:min-w-[80px]">
-                    <span
-                        class="text-[9px] sm:text-[10px] font-bold text-[#C2410C] inline-flex items-center justify-center gap-0.5 sm:gap-1">
-                        <x-icon-nagad class="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-                        <span>{{ seller_trans('nagad') }}</span>
-                    </span>
-                    <div class="text-[11px] sm:text-sm font-extrabold text-[#2B1E16] mt-0.5 sm:mt-1">
-                        {{ bn_curr($nagadSalesTotal, $locale, 0) }}
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- 4. Category Filter Horizontal Scroll Pills (Exact Mockup Match) -->
     @if($categories->count() > 1)
         <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1 scrollbar-none">
             <!-- All Category Pill (Active Orange) -->
             <button type="button" @click="vibrate(15)" wire:click="selectCategory(null)"
-                class="px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all touch-press cursor-pointer flex items-center gap-1.5 {{ is_null($selectedCategoryId) ? 'bg-[#F26522] text-white shadow-xs font-extrabold' : 'bg-white text-[#2B1E16] hover:bg-[#F8F3EA] border border-[#EFE7DE]' }}">
+                class="px-3.5 sm:px-4 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-all touch-press cursor-pointer flex items-center gap-1.5 {{ is_null($selectedCategoryId) ? 'bg-[#F26522] text-white shadow-xs font-extrabold' : 'bg-white text-[#2B1E16] hover:bg-[#F8F3EA] border border-[#EFE7DE]' }}">
                 <span>⊞</span>
                 <span>{{ seller_trans('all_items') }}</span>
             </button>
             @foreach($categories as $category)
                 <button type="button" @click="vibrate(15)" wire:click="selectCategory({{ $category->id }})"
-                    class="px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all touch-press cursor-pointer flex items-center gap-1.5 {{ $selectedCategoryId === $category->id ? 'bg-[#F26522] text-white shadow-xs font-extrabold' : 'bg-white text-[#2B1E16] hover:bg-[#F8F3EA] border border-[#EFE7DE]' }}">
+                    class="px-3.5 sm:px-4 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-all touch-press cursor-pointer flex items-center gap-1.5 {{ $selectedCategoryId === $category->id ? 'bg-[#F26522] text-white shadow-xs font-extrabold' : 'bg-white text-[#2B1E16] hover:bg-[#F8F3EA] border border-[#EFE7DE]' }}">
                     <span>{{ $category->icon }}</span>
                     <span>{{ $category->displayName($locale) }}</span>
                 </button>
@@ -164,8 +98,8 @@
         </div>
     @endif
 
-    <!-- 5. FOOD ITEMS GRID (Side-by-Side 2-Column Grid on Both Mobile & Desktop) -->
-    <div class="grid grid-cols-2 gap-2 sm:gap-3.5">
+    <!-- 5. FOOD ITEMS LIST (1 Full Row Per Item - Exact Mockup Match) -->
+    <div class="space-y-3">
         @forelse($products as $product)
             @php
                 $todayStats = $productTodaySales->get($product->id, ['count' => 0, 'revenue' => 0, 'cash_count' => 0, 'bkash_count' => 0, 'nagad_count' => 0]);
@@ -174,52 +108,54 @@
                 $foodDisplayName = $product->displayName($locale);
             @endphp
             <div x-data="{ qty: 0, method: 'cash' }"
-                class="bg-white rounded-2xl border {{ $isHighlighted ? 'border-[#F26522] ring-2 ring-[#F26522]/30' : 'border-[#EFE7DE] hover:border-[#F26522]/40' }} p-2 sm:p-3 flex flex-col justify-between gap-1.5 sm:gap-2 shadow-2xs transition-all">
+                class="bg-white rounded-3xl border {{ $isHighlighted ? 'border-[#F26522] ring-2 ring-[#F26522]/30' : 'border-[#EFE7DE] hover:border-[#F26522]/40' }} p-3.5 sm:p-4 flex flex-col justify-between gap-2.5 shadow-2xs transition-all">
 
-                <!-- Top Row: Food Image/Emoji & Details PARALLEL to SELL Button -->
-                <div class="flex items-start sm:items-center justify-between gap-1 sm:gap-2">
-                    <div class="flex items-center gap-1.5 sm:gap-2.5 min-w-0 flex-1">
+                <!-- Top Row: Food Image & Details on Left, SELL Button on Right -->
+                <div class="flex items-start justify-between gap-3">
+                    <div class="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
+                        <!-- Food Emoji/Image Box -->
                         <div
-                            class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-[#F8F3EA] border border-[#EFE7DE] flex items-center justify-center text-lg sm:text-2xl shrink-0 select-none">
+                            class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[#F8F3EA] border border-[#EFE7DE] flex items-center justify-center text-2xl sm:text-3xl shrink-0 select-none shadow-2xs">
                             {{ $product->image_emoji ?? '🍔' }}
                         </div>
 
-                        <div class="flex-1 min-w-0 pr-0.5">
-                            <h3 class="font-extrabold text-[11px] sm:text-sm text-[#2B1E16] leading-tight line-clamp-2">
+                        <!-- Name, Price & Sold Badge -->
+                        <div class="flex-1 min-w-0">
+                            <h3 class="font-extrabold text-sm sm:text-base text-[#2B1E16] leading-tight truncate">
                                 {{ $foodDisplayName }}
                             </h3>
-                            <div class="text-xs sm:text-base font-black text-[#F26522] mt-0.5">
+                            <div class="text-base sm:text-xl font-black text-[#F26522] mt-0.5">
                                 {{ bn_curr($product->price, $locale, 0) }}
                             </div>
                             <div
-                                class="flex items-center gap-1 sm:gap-1.5 flex-wrap text-[9px] sm:text-[11px] text-[#8D7B70] font-medium mt-0.5">
+                                class="flex items-center gap-1.5 sm:gap-2 flex-wrap text-[10px] sm:text-xs text-[#8D7B70] font-medium mt-0.5">
                                 <span>{{ seller_trans('sold') }}: <strong
                                         class="text-[#2B1E16] font-extrabold">{{ bn_num($soldCount, $locale) }}</strong></span>
                                 <span
-                                    class="inline-flex items-center gap-0.5 sm:gap-1 text-[8px] sm:text-[10px] bg-[#F8F3EA] px-1 sm:px-1.5 py-0.5 rounded-md border border-[#EFE7DE]">
+                                    class="inline-flex items-center gap-1 text-[9px] sm:text-[10px] bg-[#F8F3EA] px-1.5 sm:px-2 py-0.5 rounded-lg border border-[#EFE7DE]">
                                     <span class="inline-flex items-center gap-0.5 text-[#1E8E3E] font-bold"
                                         title="{{ seller_trans('cash') }}">
                                         <x-icon-cash
                                             class="w-2.5 h-1.5 sm:w-3 sm:h-2 shrink-0" /><span>{{ bn_num($todayStats['cash_count'], $locale) }}</span>
                                     </span>
                                     <span class="text-[#8D7B70]/40">•</span>
-                                    <span class="inline-flex items-center gap-0.5 sm:gap-1 text-[#BE185D] font-bold"
+                                    <span class="inline-flex items-center gap-0.5 text-[#BE185D] font-bold"
                                         title="{{ seller_trans('bkash') }}">
                                         <x-icon-bkash
-                                            class="w-2 h-2 sm:w-2.5 sm:h-2.5 shrink-0" /><span>{{ bn_num($todayStats['bkash_count'], $locale) }}</span>
+                                            class="w-2.5 h-2.5 sm:w-2.5 sm:h-2.5 shrink-0" /><span>{{ bn_num($todayStats['bkash_count'], $locale) }}</span>
                                     </span>
                                     <span class="text-[#8D7B70]/40">•</span>
-                                    <span class="inline-flex items-center gap-0.5 sm:gap-1 text-[#C2410C] font-bold"
+                                    <span class="inline-flex items-center gap-0.5 text-[#C2410C] font-bold"
                                         title="{{ seller_trans('nagad') }}">
                                         <x-icon-nagad
-                                            class="w-2 h-2 sm:w-2.5 sm:h-2.5 shrink-0" /><span>{{ bn_num($todayStats['nagad_count'], $locale) }}</span>
+                                            class="w-2.5 h-2.5 sm:w-2.5 sm:h-2.5 shrink-0" /><span>{{ bn_num($todayStats['nagad_count'], $locale) }}</span>
                                     </span>
                                 </span>
                             </div>
                         </div>
                     </div>
 
-                    <!-- SELL Button: Instant sell of pending quantity (or 1 by default) -->
+                    <!-- Instant SELL Button (Top Right) -->
                     <button type="button" @click="
                                 vibrate(50);
                                 let sellQty = qty > 0 ? qty : 1;
@@ -228,41 +164,38 @@
                                 method = 'cash';
                                 $wire.recordSale({{ $product->id }}, sellQty, sellMethod);
                             "
-                        class="py-1.5 px-2.5 sm:py-2 sm:px-3.5 rounded-xl bg-[#F26522] hover:bg-[#E05310] text-white font-black text-[11px] sm:text-xs flex items-center justify-center gap-1 shadow-2xs touch-press cursor-pointer shrink-0 transition-colors">
+                        class="py-2 px-5 sm:py-2.5 sm:px-6 rounded-xl bg-[#F26522] hover:bg-[#E05310] text-white font-black text-xs sm:text-sm flex items-center justify-center gap-1 shadow-2xs touch-press cursor-pointer shrink-0 transition-colors">
                         <span>SELL</span>
-                        <span x-show="qty > 0" class="bg-black/20 px-1 py-0.2 rounded text-[10px] font-black"
+                        <span x-show="qty > 0" class="bg-black/20 px-1.5 py-0.5 rounded text-[10px] font-black"
                             x-text="'(' + qty + ')'"></span>
                     </button>
                 </div>
 
-                <!-- Bottom Row: [bKash] & [Nagad] on Left, [+ , -] Stepper directly Below SELL on Right -->
-                <div class="flex items-center justify-between gap-1 sm:gap-1.5 pt-1.5 sm:pt-2 border-t border-[#EFE7DE]/80">
-                    <!-- bKash & Nagad Payment Selection Buttons -->
-                    <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
-                        <!-- bKash Selector Button -->
-                        <button type="button" @click="vibrate(25); method = (method === 'bkash' ? 'cash' : 'bkash')"
-                            title="{{ seller_trans('bkash') }}" :class="method === 'bkash'
-                                    ? 'bg-[#E2136E] text-white border-[#BE185D] ring-2 ring-[#BE185D]/40 shadow-xs'
-                                    : 'bg-[#FDF2F8] hover:bg-[#FCE7F3] text-[#BE185D] border-[#FBCFE8]'"
-                            class="px-1.5 py-1 sm:px-2.5 sm:py-1.5 rounded-lg border font-bold text-[9px] sm:text-[11px] flex items-center gap-0.5 sm:gap-1 cursor-pointer touch-press transition-all select-none">
-                            <x-icon-bkash class="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-                            <span>{{ seller_trans('bkash') }}</span>
-                        </button>
+                <!-- Bottom Row: [bKash] & [Nagad] and [- 0 +] Stepper (Aligned to Bottom Right) -->
+                <div class="flex items-center justify-end gap-1.5 sm:gap-2 pt-1">
+                    <!-- bKash Selector Button -->
+                    <button type="button" @click="vibrate(25); method = (method === 'bkash' ? 'cash' : 'bkash')"
+                        title="{{ seller_trans('bkash') }}" :class="method === 'bkash'
+                                ? 'bg-[#E2136E] text-white border-[#BE185D] ring-2 ring-[#BE185D]/40 shadow-xs'
+                                : 'bg-white hover:bg-[#FDF2F8] text-[#BE185D] border-[#FBCFE8]'"
+                        class="px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-xl border font-bold text-[10px] sm:text-xs flex items-center gap-1 cursor-pointer touch-press transition-all select-none">
+                        <x-icon-bkash class="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+                        <span>{{ seller_trans('bkash') }}</span>
+                    </button>
 
-                        <!-- Nagad Selector Button -->
-                        <button type="button" @click="vibrate(25); method = (method === 'nagad' ? 'cash' : 'nagad')"
-                            title="{{ seller_trans('nagad') }}" :class="method === 'nagad'
-                                    ? 'bg-[#EA580C] text-white border-[#C2410C] ring-2 ring-[#EA580C]/40 shadow-xs'
-                                    : 'bg-[#FFF7ED] hover:bg-[#FFEDD5] text-[#C2410C] border-[#FED7AA]'"
-                            class="px-1.5 py-1 sm:px-2.5 sm:py-1.5 rounded-lg border font-bold text-[9px] sm:text-[11px] flex items-center gap-0.5 sm:gap-1 cursor-pointer touch-press transition-all select-none">
-                            <x-icon-nagad class="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-                            <span>{{ seller_trans('nagad') }}</span>
-                        </button>
-                    </div>
+                    <!-- Nagad Selector Button -->
+                    <button type="button" @click="vibrate(25); method = (method === 'nagad' ? 'cash' : 'nagad')"
+                        title="{{ seller_trans('nagad') }}" :class="method === 'nagad'
+                                ? 'bg-[#EA580C] text-white border-[#C2410C] ring-2 ring-[#EA580C]/40 shadow-xs'
+                                : 'bg-white hover:bg-[#FFF7ED] text-[#C2410C] border-[#FED7AA]'"
+                        class="px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-xl border font-bold text-[10px] sm:text-xs flex items-center gap-1 cursor-pointer touch-press transition-all select-none">
+                        <x-icon-nagad class="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+                        <span>{{ seller_trans('nagad') }}</span>
+                    </button>
 
-                    <!-- Stepper (+ and - icons) directly below SELL: Decrement/Correct or Increment Count -->
-                    <div class="flex items-center gap-0.5 sm:gap-1 shrink-0">
-                        <!-- Minus Button: Decrements pending qty OR corrects previous sale -->
+                    <!-- Stepper (- and + icons) -->
+                    <div class="flex items-center gap-1 shrink-0">
+                        <!-- Minus Button -->
                         <button type="button" @click="
                                     vibrate(30);
                                     if (qty > 0) {
@@ -271,27 +204,27 @@
                                         $wire.recordCorrection({{ $product->id }});
                                     }
                                 " title="−"
-                            class="w-5 h-5 sm:w-6 sm:h-6 rounded-md sm:rounded-lg bg-white hover:bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA] font-black text-xs sm:text-sm flex items-center justify-center touch-press cursor-pointer transition-colors shadow-2xs leading-none select-none">
+                            class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white hover:bg-[#FFF7ED] text-[#F26522] border border-[#FED7AA] font-black text-sm sm:text-base flex items-center justify-center touch-press cursor-pointer transition-colors shadow-2xs leading-none select-none">
                             −
                         </button>
 
                         <!-- Pending Quantity Display Counter -->
                         <span
-                            class="min-w-[12px] sm:min-w-[16px] text-center font-black text-[10px] sm:text-xs text-[#2B1E16] select-none"
+                            class="min-w-[14px] sm:min-w-[18px] text-center font-black text-xs sm:text-sm text-[#2B1E16] select-none"
                             x-text="qty > 0 ? qty : 0">
                             0
                         </span>
 
-                        <!-- Plus Button: Increments pending qty to sell -->
+                        <!-- Plus Button -->
                         <button type="button" @click="vibrate(20); qty++" title="+"
-                            class="w-5 h-5 sm:w-6 sm:h-6 rounded-md sm:rounded-lg bg-[#FFF0E6] hover:bg-[#FFE2D1] text-[#F26522] border border-[#FED7AA] font-black text-xs sm:text-sm flex items-center justify-center touch-press cursor-pointer transition-colors shadow-2xs leading-none select-none">
+                            class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white hover:bg-[#FFF7ED] text-[#F26522] border border-[#FED7AA] font-black text-sm sm:text-base flex items-center justify-center touch-press cursor-pointer transition-colors shadow-2xs leading-none select-none">
                             +
                         </button>
                     </div>
                 </div>
             </div>
         @empty
-            <div class="col-span-2 bg-white rounded-2xl border border-[#EFE7DE] p-8 text-center shadow-2xs">
+            <div class="bg-white rounded-3xl border border-[#EFE7DE] p-8 text-center shadow-2xs">
                 <span class="text-3xl">🍔</span>
                 <h4 class="font-bold text-sm text-[#2B1E16] mt-2">{{ seller_trans('no_food_items') }}</h4>
                 <p class="text-xs text-[#8D7B70] mt-1">{{ seller_trans('no_food_items_hint') }}</p>

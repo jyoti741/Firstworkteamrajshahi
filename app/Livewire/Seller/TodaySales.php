@@ -48,7 +48,10 @@ class TodaySales extends Component
 
     public function render()
     {
-        $locale = app()->getLocale();
+        $locale = session('seller_locale', auth()->user()?->locale ?? app()->getLocale());
+        if (in_array($locale, ['en', 'bn'], true)) {
+            app()->setLocale($locale);
+        }
         $todayStart = Carbon::today()->startOfDay();
         $todayEnd = Carbon::today()->endOfDay();
 
