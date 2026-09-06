@@ -20,6 +20,15 @@ export default defineConfig({
         }),
         tailwindcss(),
     ],
+    build: {
+        rollupOptions: {
+            input: [
+                'resources/css/app.css',
+                'resources/js/app.js',
+                'resources/js/passkeys.js',
+            ],
+        },
+    },
     server: {
         cors: true,
         watch: {

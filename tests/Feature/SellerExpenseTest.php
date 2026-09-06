@@ -255,4 +255,59 @@ class SellerExpenseTest extends TestCase
         $response->assertSee('আলু এবং শাকসবজি');
         $response->assertSee('৳৪৫০');
     }
+
+    public function test_one_sellers_added_expense_is_not_visible_to_another_seller(): void
+    {
+        // Seller A is $this->seller
+        $this->actingAs($this->seller);
+
+        $expenseA = Expense::create([
+            'user_id' => $this->seller->id,
+            'business_day_id' => $this->businessDay->id,
+            'description' => 'Seller A Sugar Pack',
+            'title' => 'Seller A Sugar Pack',
+            'amount' => 150,
+            'expense_date' => Carbon::today()->toDateString(),
+        ]);
+
+        // Seller B
+        $sellerB = User::factory()->create([
+            'name' => 'Karim Cashier',
+            'role' => 'seller',
+            'is_active' => true,
+            'locale' => 'en',
+        ]);
+
+        $expenseB = Expense::create([
+            'user_id' => $sellerB->id,
+            'business_day_id' => $this->businessDay->id,
+            'description' => 'Seller B Secret Coffee',
+            'title' => 'Seller B Secret Coffee',
+            'amount' => 250,
+            'expense_date' => Carbon::today()->toDateString(),
+        ]);
+
+        // 1. Check Seller A's view:
+        $this->actingAs($this->seller);
+        Livewire::test(ExpenseManager::class)
+            ->assertSee('Seller A Sugar Pack')
+            ->assertSee('150')
+            ->assertDontSee('Seller B Secret Coffee')
+            ->assertViewHas('todayTotal', 150.0)
+            ->assertViewHas('todayCount', 1);
+
+        // 2. Check Seller B's view:
+        $this->actingAs($sellerB);
+        Livewire::test(ExpenseManager::class)
+            ->assertSee('Seller B Secret Coffee')
+            ->assertSee('250')
+            ->assertDontSee('Seller A Sugar Pack')
+            ->assertViewHas('todayTotal', 250.0)
+            ->assertViewHas('todayCount', 1);
+
+        // 3. Security: Seller B cannot edit or delete Seller A's expense
+        $this->expectException(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+        Livewire::test(ExpenseManager::class)
+            ->call('editExpense', $expenseA->id);
+    }
 }

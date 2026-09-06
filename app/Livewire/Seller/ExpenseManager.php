@@ -65,7 +65,7 @@ class ExpenseManager extends Component
     public function editExpense(int $id): void
     {
         $this->resetValidation();
-        $expense = Expense::findOrFail($id);
+        $expense = Expense::where('user_id', auth()->id())->findOrFail($id);
         $this->editingExpenseId = $expense->id;
         $this->description = $expense->description ?: $expense->title;
         $this->amount = (float) $expense->amount;
@@ -80,7 +80,7 @@ class ExpenseManager extends Component
         $cleanAmount = (float) $this->amount;
 
         if ($this->editingExpenseId) {
-            $expense = Expense::findOrFail($this->editingExpenseId);
+            $expense = Expense::where('user_id', auth()->id())->findOrFail($this->editingExpenseId);
             $expense->update([
                 'description' => $cleanDescription,
                 'title' => $cleanDescription,
@@ -99,6 +99,7 @@ class ExpenseManager extends Component
                 'amount' => $cleanAmount,
                 'category' => 'other',
                 'expense_date' => Carbon::today()->toDateString(),
+                'expense_time' => Carbon::now()->format('H:i:s'),
             ]);
 
             session()->flash('success', seller_trans('expense_added'));
@@ -110,7 +111,7 @@ class ExpenseManager extends Component
 
     public function deleteExpense(int $id): void
     {
-        $expense = Expense::findOrFail($id);
+        $expense = Expense::where('user_id', auth()->id())->findOrFail($id);
         $expense->delete();
 
         session()->flash('success', seller_trans('expense_deleted'));
@@ -125,7 +126,8 @@ class ExpenseManager extends Component
 
     public function render()
     {
-        $query = Expense::query()->with('user');
+        $userId = auth()->id();
+        $query = Expense::query()->where('user_id', $userId)->with('user');
 
         if ($this->dateFilter === 'today') {
             $query->whereDate('expense_date', Carbon::today());
@@ -141,9 +143,13 @@ class ExpenseManager extends Component
 
         $expenses = $query->latest('id')->paginate(12);
 
-        // Dynamically compute today's total expenses and count
-        $todayTotal = (float) Expense::whereDate('expense_date', Carbon::today())->sum('amount');
-        $todayCount = (int) Expense::whereDate('expense_date', Carbon::today())->count();
+        // Dynamically compute today's total expenses and count strictly for THIS seller
+        $todayTotal = (float) Expense::where('user_id', $userId)
+            ->whereDate('expense_date', Carbon::today())
+            ->sum('amount');
+        $todayCount = (int) Expense::where('user_id', $userId)
+            ->whereDate('expense_date', Carbon::today())
+            ->count();
 
         return view('livewire.seller.expense-manager', [
             'expenses' => $expenses,

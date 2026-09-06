@@ -18,6 +18,7 @@ class Expense extends Model
         'category',
         'amount',
         'expense_date',
+        'expense_time',
         'notes',
     ];
 
@@ -27,6 +28,29 @@ class Expense extends Model
             'amount' => 'decimal:2',
             'expense_date' => 'date',
         ];
+    }
+
+    public function getFormattedDateAttribute(): string
+    {
+        return $this->expense_date ? $this->expense_date->format('d M Y') : '';
+    }
+
+    public function getFormattedTimeAttribute(): string
+    {
+        if ($this->expense_time) {
+            return \Carbon\Carbon::parse($this->expense_time)->format('h:i A');
+        }
+
+        return $this->created_at ? $this->created_at->format('h:i A') : '';
+    }
+
+    public function getRecordedAtAttribute(): \Carbon\Carbon
+    {
+        if ($this->expense_date && $this->expense_time) {
+            return \Carbon\Carbon::parse($this->expense_date->format('Y-m-d') . ' ' . $this->expense_time);
+        }
+
+        return $this->created_at ?? now();
     }
 
     public function user(): BelongsTo

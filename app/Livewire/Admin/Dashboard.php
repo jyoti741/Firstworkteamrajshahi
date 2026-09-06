@@ -116,7 +116,18 @@ class Dashboard extends Component
         // 4. THIS MONTH'S METRICS (Core Requirement #1)
         $monthStart = Carbon::now()->startOfMonth();
         $monthEnd = Carbon::now()->endOfMonth();
-        $monthSales = (float) Sale::where('status', 'completed')->whereBetween('created_at', [$monthStart, $monthEnd])->sum('total_amount');
+        $monthStats = DB::table('sales')
+            ->where('status', 'completed')
+            ->whereBetween('created_at', [$monthStart, $monthEnd])
+            ->selectRaw("
+                COALESCE(SUM(total_amount), 0) as total_sales,
+                COALESCE(SUM(total_items_count), 0) as total_items,
+                COUNT(*) as total_orders
+            ")
+            ->first();
+        $monthSales = (float) ($monthStats->total_sales ?? 0);
+        $monthItemsSold = (int) ($monthStats->total_items ?? 0);
+        $monthOrders = (int) ($monthStats->total_orders ?? 0);
         $monthExpenses = (float) Expense::whereBetween('expense_date', [$monthStart->toDateString(), $monthEnd->toDateString()])->sum('amount');
         $monthProfit = $monthSales - $monthExpenses;
 
@@ -222,6 +233,8 @@ class Dashboard extends Component
             'todayItemsSold' => $todayItemsSold,
             'todayOrdersCount' => $todayOrdersCount,
             'monthSales' => $monthSales,
+            'monthItemsSold' => $monthItemsSold,
+            'monthOrders' => $monthOrders,
             'monthExpenses' => $monthExpenses,
             'monthProfit' => $monthProfit,
             'grossSales' => $grossSales,

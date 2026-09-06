@@ -80,6 +80,12 @@
                     <span>Expenses</span>
                 </a>
 
+                <a href="{{ route('admin.assets-liabilities') }}"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all {{ request()->routeIs('admin.assets-liabilities') ? 'bg-[#FFF0E6] text-[#F26522] border border-[#FED7AA] font-black' : 'text-[#554338] hover:text-[#2B1E16] hover:bg-[#F8F3EA]' }}">
+                    <span class="text-base">⚖️</span>
+                    <span>Assets & Liabilities</span>
+                </a>
+
                 <div class="pt-4 px-3 pb-2 text-[10px] font-bold text-[#8D7B70] uppercase tracking-wider">
                     Catalog & Stock
                 </div>
@@ -387,6 +393,11 @@
                 <a href="{{ route('admin.products') }}"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold {{ request()->routeIs('admin.products') ? 'bg-[#FFF0E6] text-[#F26522] font-black' : 'text-[#554338] hover:bg-[#F8F3EA]' }}">
                     <span>🍔</span> Food Items
+                </a>
+
+                <a href="{{ route('admin.assets-liabilities') }}"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold {{ request()->routeIs('admin.assets-liabilities') ? 'bg-[#FFF0E6] text-[#F26522] font-black' : 'text-[#554338] hover:bg-[#F8F3EA]' }}">
+                    <span>⚖️</span> Assets & Liabilities
                 </a>
 
                 <div class="pt-3 px-3 pb-1 text-[10px] font-bold text-[#8D7B70] uppercase tracking-wider">

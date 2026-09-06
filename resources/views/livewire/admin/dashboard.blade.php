@@ -42,73 +42,47 @@
             </span>
         </div>
 
-        <!-- Metrics Grid -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 py-3">
+        <!-- Metrics Grid (Sales, Items Sold, Orders) -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 py-3">
             <!-- Sales -->
-            <div class="bg-[#F8F3EA] border border-[#EFE7DE]/80 rounded-2xl p-3 flex flex-col justify-between overflow-hidden">
-                <span class="text-[10px] sm:text-[11px] font-bold text-[#8D7B70] uppercase tracking-wider truncate">Sales</span>
-                <div class="text-lg sm:text-2xl font-black text-[#1E8E3E] tracking-tight mt-1 truncate">
+            <div class="bg-[#F8F3EA] border border-[#EFE7DE]/80 rounded-2xl p-3.5 flex flex-col justify-between overflow-hidden">
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] sm:text-[11px] font-bold text-[#8D7B70] uppercase tracking-wider truncate">Today's Sales</span>
+                    <span class="text-sm">🛒</span>
+                </div>
+                <div class="text-xl sm:text-2xl font-black text-[#1E8E3E] tracking-tight mt-1 truncate">
                     {{ $currency }}{{ number_format($todaySales, 0) }}
                 </div>
-            </div>
-
-            <!-- Expenses -->
-            <div class="bg-[#F8F3EA] border border-[#EFE7DE]/80 rounded-2xl p-3 flex flex-col justify-between overflow-hidden">
-                <span class="text-[10px] sm:text-[11px] font-bold text-[#8D7B70] uppercase tracking-wider truncate">Expenses</span>
-                <div class="text-lg sm:text-2xl font-black text-[#DC2626] tracking-tight mt-1 truncate">
-                    {{ $currency }}{{ number_format($todayExpenses, 0) }}
-                </div>
-            </div>
-
-            <!-- Profit / Loss -->
-            <div class="bg-[#F8F3EA] border border-[#EFE7DE]/80 rounded-2xl p-3 flex flex-col justify-between overflow-hidden">
-                <span class="text-[10px] sm:text-[11px] font-bold text-[#8D7B70] uppercase tracking-wider truncate">
-                    {{ $isTodayProfit ? 'Profit' : 'Loss' }}
-                </span>
-                <div
-                    class="text-lg sm:text-2xl font-black tracking-tight mt-1 truncate {{ $isTodayProfit ? 'text-[#1E8E3E]' : 'text-[#DC2626]' }}">
-                    {{ $isTodayProfit ? '+' : '' }}{{ $currency }}{{ number_format($todayProfit, 0) }}
-                </div>
+                <span class="text-[10px] text-[#8D7B70] mt-0.5 font-medium">Completed customer revenue</span>
             </div>
 
             <!-- Items Sold -->
-            <div class="bg-[#F8F3EA] border border-[#EFE7DE]/80 rounded-2xl p-3 flex flex-col justify-between overflow-hidden">
-                <span class="text-[10px] sm:text-[11px] font-bold text-[#8D7B70] uppercase tracking-wider truncate">Items Sold</span>
-                <div class="text-lg sm:text-2xl font-black text-[#F26522] tracking-tight mt-1 truncate">
+            <div class="bg-[#F8F3EA] border border-[#EFE7DE]/80 rounded-2xl p-3.5 flex flex-col justify-between overflow-hidden">
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] sm:text-[11px] font-bold text-[#8D7B70] uppercase tracking-wider truncate">Items Sold</span>
+                    <span class="text-sm">📦</span>
+                </div>
+                <div class="text-xl sm:text-2xl font-black text-[#F26522] tracking-tight mt-1 truncate">
                     {{ number_format($todayItemsSold) }}
                 </div>
+                <span class="text-[10px] text-[#8D7B70] mt-0.5 font-medium">Food units prepared & sold</span>
+            </div>
+
+            <!-- Completed Orders -->
+            <div class="bg-[#F8F3EA] border border-[#EFE7DE]/80 rounded-2xl p-3.5 flex flex-col justify-between overflow-hidden">
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] sm:text-[11px] font-bold text-[#8D7B70] uppercase tracking-wider truncate">Orders</span>
+                    <span class="text-sm">📋</span>
+                </div>
+                <div class="text-xl sm:text-2xl font-black text-[#2B1E16] tracking-tight mt-1 truncate">
+                    {{ $todayOrdersCount }}
+                </div>
+                <span class="text-[10px] text-[#8D7B70] mt-0.5 font-medium">Sales transactions</span>
             </div>
         </div>
-
-        <!-- Profit / Loss Banner -->
-        @if($isTodayProfit)
-            <div
-                class="mt-1 py-2 px-3.5 rounded-xl bg-[#EAF7EE] border border-[#CDEED5] flex flex-wrap items-center justify-between gap-1.5 text-xs sm:text-sm font-bold text-[#1E8E3E]">
-                <div class="flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-[#1E8E3E] shrink-0"></span>
-                    <span>🟢 You're making a profit today</span>
-                </div>
-                <span class="text-[#1E8E3E] font-black shrink-0">+{{ $currency }}{{ number_format($todayProfit, 0) }}</span>
-            </div>
-        @else
-            <div
-                class="mt-1 py-2 px-3.5 rounded-xl bg-[#FEF2F2] border border-[#FECACA] flex flex-col gap-1.5 text-xs sm:text-sm font-bold text-[#DC2626]">
-                <div class="flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-[#DC2626] shrink-0"></span>
-                    <span>🔴 Loss Today</span>
-                </div>
-                <div class="text-xs text-[#DC2626] flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                    <span>Sales: {{ $currency }}{{ number_format($todaySales, 0) }}</span>
-                    <span>•</span>
-                    <span>Expenses: {{ $currency }}{{ number_format($todayExpenses, 0) }}</span>
-                    <span>•</span>
-                    <span class="font-black">Loss: {{ $currency }}{{ number_format($todayLoss, 0) }}</span>
-                </div>
-            </div>
-        @endif
     </div>
 
-    <!-- 2. QUICK ACTIONS (2x2 Grid) -->
+    <!-- 2. QUICK ACTIONS (4 Grid) -->
     <div class="space-y-2">
         <h3 class="text-xs font-bold text-[#8D7B70] uppercase tracking-wider px-1">
             Quick Actions
@@ -124,13 +98,12 @@
                     class="text-[10px] text-[#8D7B70] mt-0.5">{{ $currency }}{{ number_format($todaySales, 0) }}</span>
             </a>
 
-            <!-- 2. Expenses -->
-            <a href="{{ route('admin.expenses') }}"
-                class="bg-white hover:bg-[#F8F3EA] border border-[#EFE7DE] hover:border-[#DC2626]/40 rounded-2xl p-3.5 sm:p-4 flex flex-col items-center justify-center text-center shadow-2xs transition-all touch-press group">
-                <span class="text-2xl sm:text-3xl group-hover:scale-110 transition-transform">💸</span>
-                <span class="font-extrabold text-xs sm:text-sm text-[#2B1E16] mt-1.5">Expenses</span>
-                <span
-                    class="text-[10px] text-[#8D7B70] mt-0.5">{{ $currency }}{{ number_format($todayExpenses, 0) }}</span>
+            <!-- 2. Assets & Liabilities -->
+            <a href="{{ route('admin.assets-liabilities') }}"
+                class="bg-white hover:bg-[#F8F3EA] border border-[#EFE7DE] hover:border-[#1E8E3E]/40 rounded-2xl p-3.5 sm:p-4 flex flex-col items-center justify-center text-center shadow-2xs transition-all touch-press group">
+                <span class="text-2xl sm:text-3xl group-hover:scale-110 transition-transform">🟢</span>
+                <span class="font-extrabold text-xs sm:text-sm text-[#2B1E16] mt-1.5">Assets & Liabilities</span>
+                <span class="text-[10px] text-[#8D7B70] mt-0.5">Manage Assets</span>
             </a>
 
             <!-- 3. Food Items -->
@@ -146,7 +119,7 @@
                 class="bg-white hover:bg-[#F8F3EA] border border-[#EFE7DE] hover:border-[#1E8E3E]/40 rounded-2xl p-3.5 sm:p-4 flex flex-col items-center justify-center text-center shadow-2xs transition-all touch-press group">
                 <span class="text-2xl sm:text-3xl group-hover:scale-110 transition-transform">📊</span>
                 <span class="font-extrabold text-xs sm:text-sm text-[#2B1E16] mt-1.5">Reports</span>
-                <span class="text-[10px] text-[#8D7B70] mt-0.5">P&L & Monthly Summary</span>
+                <span class="text-[10px] text-[#8D7B70] mt-0.5">Daily Activity Report</span>
             </a>
         </div>
     </div>
@@ -165,28 +138,27 @@
             <!-- Month Sales -->
             <div class="bg-[#F8F3EA] border border-[#EFE7DE]/80 rounded-2xl p-3">
                 <span
-                    class="text-[10px] sm:text-[11px] font-bold text-[#8D7B70] uppercase tracking-wider block">Sales</span>
+                    class="text-[10px] sm:text-[11px] font-bold text-[#8D7B70] uppercase tracking-wider block">Month Sales</span>
                 <span class="text-sm sm:text-lg font-black text-[#1E8E3E] mt-0.5 block">
                     {{ $currency }}{{ number_format($monthSales, 0) }}
                 </span>
             </div>
 
-            <!-- Month Expenses -->
+            <!-- Month Items Sold -->
             <div class="bg-[#F8F3EA] border border-[#EFE7DE]/80 rounded-2xl p-3">
                 <span
-                    class="text-[10px] sm:text-[11px] font-bold text-[#8D7B70] uppercase tracking-wider block">Expenses</span>
-                <span class="text-sm sm:text-lg font-black text-[#DC2626] mt-0.5 block">
-                    {{ $currency }}{{ number_format($monthExpenses, 0) }}
+                    class="text-[10px] sm:text-[11px] font-bold text-[#8D7B70] uppercase tracking-wider block">Items Sold</span>
+                <span class="text-sm sm:text-lg font-black text-[#F26522] mt-0.5 block">
+                    {{ number_format($monthItemsSold) }}
                 </span>
             </div>
 
-            <!-- Month Profit -->
+            <!-- Month Orders -->
             <div class="bg-[#F8F3EA] border border-[#EFE7DE]/80 rounded-2xl p-3">
                 <span
-                    class="text-[10px] sm:text-[11px] font-bold text-[#8D7B70] uppercase tracking-wider block">Profit</span>
-                <span
-                    class="text-sm sm:text-lg font-black {{ $monthProfit >= 0 ? 'text-[#F26522]' : 'text-[#DC2626]' }} mt-0.5 block">
-                    {{ $monthProfit >= 0 ? '+' : '' }}{{ $currency }}{{ number_format($monthProfit, 0) }}
+                    class="text-[10px] sm:text-[11px] font-bold text-[#8D7B70] uppercase tracking-wider block">Total Orders</span>
+                <span class="text-sm sm:text-lg font-black text-[#2B1E16] mt-0.5 block">
+                    {{ number_format($monthOrders) }}
                 </span>
             </div>
         </div>

@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\Admin\AssetLiabilityManager;
 use App\Livewire\Admin\Dashboard as AdminDashboard;
 use App\Livewire\Admin\ExpenseManager;
 use App\Livewire\Admin\ProductManager;
@@ -51,6 +52,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/dashboard', AdminDashboard::class)->name('dashboard');
     Route::get('/sales', SalesList::class)->name('sales');
     Route::get('/expenses', ExpenseManager::class)->name('expenses');
+    Route::get('/assets-liabilities', AssetLiabilityManager::class)->name('assets-liabilities');
     Route::get('/products', ProductManager::class)->name('products');
     Route::get('/reports', Reports::class)->name('reports');
     Route::get('/sellers', SellerManager::class)->name('sellers');
