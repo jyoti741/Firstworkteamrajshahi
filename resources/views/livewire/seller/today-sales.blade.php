@@ -18,7 +18,7 @@
         </a>
     </div>
 
-    <!-- Today's Summary Card (Money Bag on Left + 3 Mini Metric Tiles on Right) -->
+    <!-- Today's Summary Card (Money Bag on Left + 3 Mini Payment Method Tiles on Right - Exact Mockup Match) -->
     <div class="bg-white rounded-2xl border border-[#EFE7DE] p-3 sm:p-4 shadow-2xs">
         <div class="flex items-center justify-between gap-2 sm:gap-3">
             <!-- Left: Sales Total & Money Bag -->

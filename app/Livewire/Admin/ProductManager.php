@@ -29,6 +29,7 @@ class ProductManager extends Component
     public ?int $category_id = null;
     public string $description = '';
     public ?float $price = null;
+<<<<<<< HEAD
     public ?float $cost_price = 0.0; // Kept as internal property for backward DB/test compatibility
     public string $image_emoji = '🍔';
     public $photo = null;
@@ -36,10 +37,16 @@ class ProductManager extends Component
     public ?string $suggested_image_title = null;
     public bool $is_suggested = false;
     public bool $showPresetGallery = false;
+=======
+    public ?float $cost_price = 0.0;
+    public string $image_emoji = '🍽️';
+>>>>>>> jyoti2nd
     public int $current_stock = 0;
     public bool $track_inventory = true;
     public bool $is_available = true;
     public int $sort_order = 0;
+    public bool $manualEmojiSet = false;
+    public bool $showEmojiPicker = false;
 
     // Inline Category creation in Add/Edit form
     public bool $showNewCategoryInput = false;
@@ -67,6 +74,13 @@ class ProductManager extends Component
     public ?int $deletingCategoryId = null;
     public ?string $deletingCategoryName = null;
 
+    // Inline Category state for food item modal
+    public bool $showInlineCategoryInput = false;
+    public ?int $inlineCategoryEditingId = null;
+    public string $inlineCategoryName = '';
+    public string $inlineCategoryNameBn = '';
+    public string $inlineCategoryIcon = '🍔';
+
     public function openAddProductModal(): void
     {
         $this->reset([
@@ -90,11 +104,14 @@ class ProductManager extends Component
             'showEditCategoryModal',
             'showDeleteCategoryModal',
         ]);
-        $this->image_emoji = '🍔';
-        $this->category_id = null;
+        $this->manualEmojiSet = false;
+        $this->showEmojiPicker = false;
+        $this->category_id = Category::first()?->id;
+        $this->image_emoji = $this->detectEmoji();
         $this->track_inventory = true;
         $this->is_available = true;
         $this->showProductModal = true;
+        $this->cancelInlineCategory();
     }
 
     public function updatedCategoryId($val): void
@@ -206,7 +223,9 @@ class ProductManager extends Component
         $this->description = $product->description ?? '';
         $this->price = (float) $product->price;
         $this->cost_price = (float) $product->cost_price;
-        $this->image_emoji = $product->image_emoji ?? '🍔';
+        $this->image_emoji = $product->image_emoji ?: '🍽️';
+        $this->manualEmojiSet = true;
+        $this->showEmojiPicker = false;
         $this->image_path = $product->image_path;
         $this->photo = null;
         $this->showPresetGallery = false;
@@ -223,12 +242,12 @@ class ProductManager extends Component
                 }
             }
         }
-
         $this->current_stock = $product->current_stock;
         $this->track_inventory = $product->track_inventory;
         $this->is_available = $product->is_available;
         $this->sort_order = $product->sort_order;
         $this->showProductModal = true;
+        $this->cancelInlineCategory();
     }
 
     public function updatedPhoto(): void
@@ -301,7 +320,7 @@ class ProductManager extends Component
             'description' => $this->description ?? '',
             'price' => $this->price,
             'cost_price' => $this->cost_price ?? 0,
-            'image_emoji' => $this->image_emoji ?: '🍔',
+            'image_emoji' => $this->image_emoji ?: '🍽️',
             'image_path' => $finalImagePath,
             'current_stock' => $this->current_stock ?? 50,
             'track_inventory' => $this->track_inventory,
@@ -429,7 +448,291 @@ class ProductManager extends Component
     public function deleteCategory(int $id): void
     {
         Category::findOrFail($id)->delete();
+        if ((string) $this->categoryFilter === (string) $id) {
+            $this->categoryFilter = 'all';
+        }
+        if ($this->category_id === $id) {
+            $this->category_id = Category::first()?->id;
+        }
         session()->flash('success', 'Category deleted.');
+    }
+
+    // Inline Category Methods for Food Item Modal
+    public function toggleInlineCategoryAdd(): void
+    {
+        if ($this->showInlineCategoryInput && !$this->inlineCategoryEditingId) {
+            $this->showInlineCategoryInput = false;
+        } else {
+            $this->inlineCategoryEditingId = null;
+            $this->inlineCategoryName = '';
+            $this->inlineCategoryNameBn = '';
+            $this->inlineCategoryIcon = '🍔';
+            $this->showInlineCategoryInput = true;
+        }
+    }
+
+    public function startInlineCategoryEdit(): void
+    {
+        if ($this->category_id) {
+            $category = Category::find($this->category_id);
+            if ($category) {
+                $this->inlineCategoryEditingId = $category->id;
+                $this->inlineCategoryName = $category->name;
+                $this->inlineCategoryNameBn = $category->name_bn ?? '';
+                $this->inlineCategoryIcon = $category->icon ?: '🍔';
+                $this->showInlineCategoryInput = true;
+            }
+        }
+    }
+
+    public function cancelInlineCategory(): void
+    {
+        $this->showInlineCategoryInput = false;
+        $this->inlineCategoryEditingId = null;
+        $this->inlineCategoryName = '';
+        $this->inlineCategoryNameBn = '';
+    }
+
+    public function saveInlineCategory(): void
+    {
+        $this->validate([
+            'inlineCategoryName' => 'required|string|max:100',
+            'inlineCategoryNameBn' => 'nullable|string|max:100',
+            'inlineCategoryIcon' => 'nullable|string|max:10',
+        ]);
+
+        $data = [
+            'name' => $this->inlineCategoryName,
+            'name_bn' => $this->inlineCategoryNameBn ?: null,
+            'icon' => $this->inlineCategoryIcon ?: '🍔',
+        ];
+
+        if ($this->inlineCategoryEditingId) {
+            $cat = Category::findOrFail($this->inlineCategoryEditingId);
+            $cat->update($data);
+            session()->flash('success', "Category '{$cat->name}' updated.");
+        } else {
+            $maxOrder = (int) Category::max('sort_order');
+            $data['sort_order'] = $maxOrder + 1;
+            $cat = Category::create($data);
+            $this->category_id = $cat->id;
+            session()->flash('success', "Category '{$cat->name}' created.");
+        }
+
+        $this->cancelInlineCategory();
+    }
+
+    public function deleteSelectedCategory(): void
+    {
+        if ($this->category_id) {
+            $cat = Category::find($this->category_id);
+            if ($cat) {
+                $catId = $cat->id;
+                $catName = $cat->name;
+                $cat->delete();
+                $this->category_id = Category::first()?->id;
+                if ((string) $this->categoryFilter === (string) $catId) {
+                    $this->categoryFilter = 'all';
+                }
+                session()->flash('success', "Category '{$catName}' deleted.");
+            }
+        }
+        $this->cancelInlineCategory();
+    }
+
+    // Emoji Suggestion & Custom Selection
+    public function toggleEmojiPicker(): void
+    {
+        $this->showEmojiPicker = ! $this->showEmojiPicker;
+    }
+
+    public function selectEmoji(string $emoji): void
+    {
+        $this->image_emoji = $emoji;
+        $this->manualEmojiSet = true;
+    }
+
+    public function resetToAutoEmoji(): void
+    {
+        $this->manualEmojiSet = false;
+        $this->image_emoji = $this->detectEmoji();
+    }
+
+    public function updatedName(): void
+    {
+        if (! $this->manualEmojiSet) {
+            $this->image_emoji = $this->detectEmoji();
+        }
+    }
+
+    public function updatedNameBn(): void
+    {
+        if (! $this->manualEmojiSet) {
+            $this->image_emoji = $this->detectEmoji();
+        }
+    }
+
+    public function updatedImageEmoji(): void
+    {
+        if (trim($this->image_emoji) !== '') {
+            $this->manualEmojiSet = true;
+        }
+    }
+
+    public function detectEmoji(): string
+    {
+        $text = mb_strtolower(trim($this->name . ' ' . $this->name_bn));
+        if ($text === '') {
+            return '🍽️';
+        }
+
+        // Ordered mapping of keywords to emoji
+        $map = [
+            // Fuchka & Chotpoti
+            ['emoji' => '🥣', 'keywords' => [
+                'fuchka', 'phuchka', 'puchka', 'fuska', 'phuska', 'ফুচকা', 'ফূচকা', 'ফুসকা',
+                'chotpoti', 'chatpati', 'chot poti', 'চটপটি', 'চটপটী',
+                'pani puri', 'panipuri', 'golgappa',
+            ]],
+            // Singara & Samosa & Momos
+            ['emoji' => '🥟', 'keywords' => [
+                'singara', 'shingara', 'singada', 'shingada', 'সিঙ্গারা', 'সিংগাড়া', 'সিংগাড়া',
+                'samosa', 'samusa', 'somosa', 'somucha', 'সমুচা', 'সামুচা', 'সমুসা',
+                'momo', 'momos', 'মোমো', 'dumpling', 'ডাম্পলিং',
+            ]],
+            // Pizza
+            ['emoji' => '🍕', 'keywords' => [
+                'pizza', 'pizzas', 'pizaa', 'pizah', 'পিজ্জা', 'পিৎজা', 'পিজা',
+            ]],
+            // Burger
+            ['emoji' => '🍔', 'keywords' => [
+                'burger', 'burgers', 'bargar', 'burgur', 'বার্গার', 'hamburger', 'cheeseburger', 'beef burger', 'chicken burger', 'patty',
+            ]],
+            // Ice Cream
+            ['emoji' => '🍦', 'keywords' => [
+                'ice cream', 'icecream', 'ice-cream', 'আইসক্রিম', 'আইস ক্রিম', 'kulfi', 'কুলফি', 'sundae',
+            ]],
+            // Cake & Pastry
+            ['emoji' => '🍰', 'keywords' => [
+                'cake', 'caek', 'কেক', 'pastry', 'পেস্ট্রি', 'brownie', 'ব্রাউনি', 'cupcake',
+            ]],
+            // Tea & Coffee
+            ['emoji' => '☕', 'keywords' => [
+                'coffee', 'coffe', 'cawfee', 'কফি', 'espresso', 'cappuccino', 'latte', 'cold coffee',
+                'tea', 'chai', 'cha', 'চা', 'দুধ চা', 'লাল চা', 'milk tea', 'black tea', 'green tea', 'masala tea',
+            ]],
+            // Juice & Drinks
+            ['emoji' => '🧃', 'keywords' => [
+                'juice', 'jus', 'juce', 'জুস', 'sharbat', 'sherbet', 'শরবত', 'lemonade', 'লেবুর শরবত', 'orange juice', 'mango juice',
+            ]],
+            // Noodles & Chowmein & Pasta
+            ['emoji' => '🍜', 'keywords' => [
+                'noodle', 'noodles', 'nudls', 'নুডলস', 'নুডুলস', 'নুডুল', 'chowmein', 'chawmin', 'chow mein', 'chaomin', 'চাওমিন', 'চাউমিন',
+                'ramen', 'maggi', 'pasta', 'পাস্তা', 'spaghetti',
+            ]],
+            // Biryani & Rice
+            ['emoji' => '🍚', 'keywords' => [
+                'biryani', 'biriyani', 'briyani', 'বিরিয়ানি', 'বিরিয়ানি', 'বিরিআনি',
+                'rice', 'ভাত', 'fried rice', 'friedrice', 'ফ্রাইড রাইস',
+                'khichuri', 'খিচুড়ি', 'খিচুড়ি', 'tehari', 'তেহারি', 'polao', 'pulao', 'পোলাও', 'kacchi', 'কাচ্চি',
+            ]],
+            // Chicken
+            ['emoji' => '🍗', 'keywords' => [
+                'chicken', 'chiken', 'chikn', 'চিকেন', 'মুরগি', 'মুরগী', 'fried chicken', 'ফ্রাইড চিকেন', 'wings', 'উইংস', 'drumstick', 'nugget',
+            ]],
+            // Fish & Seafood
+            ['emoji' => '🐟', 'keywords' => [
+                'fish', 'মাছ', 'fish fry', 'shrimp', 'prawn', 'চিংড়ি', 'চিংড়ি',
+            ]],
+            // Rolls & Shawarma & Wraps
+            ['emoji' => '🌯', 'keywords' => [
+                'roll', 'রোল', 'shawarma', 'sharma', 'শর্মা', 'wrap', 'র‍্যাপ', 'frankie',
+            ]],
+            // Fries & Chips
+            ['emoji' => '🍟', 'keywords' => [
+                'fry', 'fries', 'french fries', 'ফ্রেঞ্চ ফ্রাই', 'ফ্রাই', 'potato', 'আলু', 'chips', 'চিপস', 'wedges',
+            ]],
+            // Sandwiches
+            ['emoji' => '🥪', 'keywords' => [
+                'sandwich', 'sandwitch', 'স্যান্ডউইচ', 'sub', 'সাব', 'panini',
+            ]],
+            // Hot dog & Sausage
+            ['emoji' => '🌭', 'keywords' => [
+                'hotdog', 'hot dog', 'হটডগ', 'sausage', 'সসেজ',
+            ]],
+            // Tacos
+            ['emoji' => '🌮', 'keywords' => [
+                'taco', 'tacos', 'টাকো',
+            ]],
+            // Meat & Kebab & Steak
+            ['emoji' => '🥩', 'keywords' => [
+                'meat', 'beef', 'মাংস', 'বিফ', 'mutton', 'খাসি', 'steak', 'kebab', 'kabab', 'কাবাব', 'tikka', 'শিক',
+            ]],
+            // Soda & Soft Drink
+            ['emoji' => '🥤', 'keywords' => [
+                'soda', 'coke', 'pepsi', 'soft drink', 'কোল্ড ড্রিংক', 'shake', 'milkshake', 'মিল্কশেক', 'smoothie',
+            ]],
+            // Water
+            ['emoji' => '💧', 'keywords' => [
+                'water', 'pani', 'পানি', 'mineral water',
+            ]],
+            // Sweets & Desserts
+            ['emoji' => '🍬', 'keywords' => [
+                'sweet', 'sweets', 'mishti', 'misti', 'মিষ্টি', 'roshogolla', 'রসগোল্লা', 'gulab jamun', 'laddu', 'লাড্ডু',
+            ]],
+            // Bakery / Bread / Donut
+            ['emoji' => '🍩', 'keywords' => [
+                'donut', 'doughnut', 'ডোনাট',
+            ]],
+            ['emoji' => '🍞', 'keywords' => [
+                'bread', 'toast', 'পাউরুটি', 'বন', 'bun',
+            ]],
+            ['emoji' => '🧇', 'keywords' => [
+                'waffle', 'ওয়াফেল',
+            ]],
+            ['emoji' => '🥞', 'keywords' => [
+                'pancake', 'প্যানকেক',
+            ]],
+            ['emoji' => '🥗', 'keywords' => [
+                'salad', 'সালাদ',
+            ]],
+            ['emoji' => '🍳', 'keywords' => [
+                'egg', 'omelette', 'ডিম', 'ওমলেট',
+            ]],
+            ['emoji' => '🍿', 'keywords' => [
+                'popcorn', 'পপকর্ন',
+            ]],
+        ];
+
+        foreach ($map as $entry) {
+            foreach ($entry['keywords'] as $kw) {
+                if (str_contains($text, mb_strtolower($kw))) {
+                    return $entry['emoji'];
+                }
+            }
+        }
+
+        // Fallback: Check category icon if non-generic
+        if ($this->category_id) {
+            $cat = Category::find($this->category_id);
+            if ($cat && $cat->icon && ! in_array($cat->icon, ['🍔', '📁', '🍽️', '🍴'], true)) {
+                return $cat->icon;
+            }
+        }
+
+        // Default food fallback: 🍽️
+        return '🍽️';
+    }
+
+    public function getPopularFoodEmojisProperty(): array
+    {
+        return [
+            '🥣', '🥟', '🍔', '🍕', '🍚', '🍜', '🍗', '🐟',
+            '☕', '🧃', '🍦', '🍰', '🌯', '🍟', '🥪', '🌭',
+            '🌮', '🥩', '🍢', '🍳', '🍤', '🍞', '🧇', '🥞',
+            '🍩', '🍪', '🍫', '🍬', '🥤', '💧', '🍿', '🥗',
+            '🍽️', '🍴',
+        ];
     }
 
     public function render()
