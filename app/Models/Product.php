@@ -41,7 +41,7 @@ class Product extends Model
     public function displayName(?string $locale = null): string
     {
         $currentLocale = $locale ?? app()->getLocale();
-        if ($currentLocale === 'bn' && ! empty($this->name_bn)) {
+        if ($currentLocale === 'bn' && !empty($this->name_bn)) {
             return $this->name_bn;
         }
 
@@ -51,6 +51,23 @@ class Product extends Model
     public function getLocalizedNameAttribute(): string
     {
         return $this->displayName();
+    }
+
+    public function getImageUrlAttribute(): ?string
+    {
+        if (empty($this->image_path)) {
+            return null;
+        }
+
+        if (str_starts_with($this->image_path, 'http://') || str_starts_with($this->image_path, 'https://')) {
+            return $this->image_path;
+        }
+
+        if (str_starts_with($this->image_path, 'images/')) {
+            return asset($this->image_path);
+        }
+
+        return asset('storage/' . $this->image_path);
     }
 
     public function category(): BelongsTo

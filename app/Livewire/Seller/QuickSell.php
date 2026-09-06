@@ -448,7 +448,8 @@ class QuickSell extends Component
 
     public function render(): \Illuminate\Contracts\View\View
     {
-        $locale = app()->getLocale();
+        $locale = session('seller_locale') ?? auth()->user()?->locale ?? app()->getLocale();
+        app()->setLocale($locale);
 
         // 1. Get Categories
         $categories = Category::where('is_active', true)->orderBy('sort_order')->get();
