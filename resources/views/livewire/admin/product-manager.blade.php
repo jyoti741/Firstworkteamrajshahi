@@ -7,12 +7,7 @@
                 class="text-xl sm:text-2xl font-extrabold text-[#2B1E16] tracking-tight flex items-center gap-2 truncate">
                 <span>🍔</span> Food Items
             </h1>
-<<<<<<< HEAD
-            <p class="text-xs text-[#8D7B70] font-medium truncate">Manage cart menu items, pictures, selling prices, and bilingual names.</p>
-=======
-            <p class="text-xs text-[#8D7B70] font-medium truncate">Manage cart menu items, categories, selling prices,
-                and bilingual names.</p>
->>>>>>> jyoti2nd
+            <p class="text-xs text-[#8D7B70] font-medium truncate">Manage cart menu items, pictures, categories, selling prices, and bilingual names.</p>
         </div>
 
         <button type="button" wire:click="openAddProductModal"
@@ -158,7 +153,6 @@
                 </div>
 
                 <form wire:submit="saveProduct" class="space-y-4">
-<<<<<<< HEAD
                     <!-- 1. Item Picture Section -->
                     <div class="space-y-2">
                         <label class="block text-xs font-bold text-[#554338]">Item Picture</label>

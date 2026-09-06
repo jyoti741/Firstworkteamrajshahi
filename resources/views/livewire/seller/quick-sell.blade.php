@@ -79,10 +79,7 @@
         </div>
     @endif
 
-<<<<<<< HEAD
 
-=======
->>>>>>> jyoti2nd
     <!-- 4. Category Filter Horizontal Scroll Pills (Exact Mockup Match) -->
     @if($categories->count() > 1)
         <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1 scrollbar-none">

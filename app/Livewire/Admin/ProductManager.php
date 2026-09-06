@@ -29,18 +29,13 @@ class ProductManager extends Component
     public ?int $category_id = null;
     public string $description = '';
     public ?float $price = null;
-<<<<<<< HEAD
     public ?float $cost_price = 0.0; // Kept as internal property for backward DB/test compatibility
-    public string $image_emoji = '🍔';
+    public string $image_emoji = '🍽️';
     public $photo = null;
     public ?string $image_path = null;
     public ?string $suggested_image_title = null;
     public bool $is_suggested = false;
     public bool $showPresetGallery = false;
-=======
-    public ?float $cost_price = 0.0;
-    public string $image_emoji = '🍽️';
->>>>>>> jyoti2nd
     public int $current_stock = 0;
     public bool $track_inventory = true;
     public bool $is_available = true;
